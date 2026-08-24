@@ -1231,3 +1231,108 @@ function loadTheme() {
 
 
 loadTheme();
+
+// =================================
+// EINSTELLUNGEN
+// =================================
+
+function clearHomeHubData() {
+    const confirmDelete = confirm(
+        "Möchtest du wirklich alle HomeHub-Daten löschen?"
+    );
+
+    if (!confirmDelete) {
+        return;
+    }
+
+    localStorage.clear();
+
+    alert("Alle HomeHub-Daten wurden gelöscht.");
+
+    location.reload();
+}
+
+// =================================
+// DATEN SICHERN
+// =================================
+
+function exportHomeHubData() {
+
+    const data = {};
+
+    for (let i = 0; i < localStorage.length; i++) {
+
+        const key = localStorage.key(i);
+
+        data[key] = localStorage.getItem(key);
+    }
+
+    const json = JSON.stringify(data, null, 2);
+
+    const blob = new Blob(
+        [json],
+        { type: "application/json" }
+    );
+
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = "HomeHub-Backup.json";
+
+    link.click();
+
+    URL.revokeObjectURL(url);
+}
+
+
+// =================================
+// DATEN WIEDERHERSTELLEN
+// =================================
+
+function importHomeHubData(event) {
+
+    const file = event.target.files[0];
+
+    if (!file) {
+        return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = function(e) {
+
+        try {
+
+            const data = JSON.parse(e.target.result);
+
+            localStorage.clear();
+
+            Object.keys(data).forEach(function(key) {
+
+                localStorage.setItem(
+                    key,
+                    data[key]
+                );
+
+            });
+
+            alert(
+                "HomeHub wurde erfolgreich wiederhergestellt."
+            );
+
+            location.reload();
+
+        } catch (error) {
+
+            alert(
+                "Die Datei konnte nicht gelesen werden."
+            );
+
+        }
+
+    };
+
+    reader.readAsText(file);
+}

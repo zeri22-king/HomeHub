@@ -48,6 +48,14 @@
                 Haushalt
             </button>
 
+<button
+    class="nav-button"
+    onclick="showPage('settings')"
+>
+    <span>⚙️</span>
+    Einstellungen
+</button>
+
         </nav>
         <div class="sidebar-bottom">
 
@@ -431,10 +439,249 @@
 
         </section>
 
+ 
+
+
+
+<!-- ================================
+     EINSTELLUNGEN
+================================ -->
+
+<div id="settings" class="page">
+
+    <div class="page-header">
+
+        <div>
+            <div class="eyebrow">
+                EINSTELLUNGEN
+            </div>
+
+            <h1>
+                ⚙️ Einstellungen
+            </h1>
+
+            <p class="subtitle">
+                Passe dein HomeHub an.
+            </p>
+        </div>
+
+    </div>
+
+
+    <!-- DARSTELLUNG -->
+
+    <div class="settings-section">
+
+        <h2>
+            🎨 Darstellung
+        </h2>
+
+
+        <div class="settings-card">
+
+            <div class="settings-info">
+
+                <strong>
+                    Dark Mode
+                </strong>
+
+                <span>
+                    Ändere das Erscheinungsbild von HomeHub.
+                </span>
+
+            </div>
+
+
+            <button
+                class="settings-action"
+                onclick="toggleTheme()"
+            >
+                🌙 / ☀️
+            </button>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- STARTSEITE -->
+
+    <div class="settings-section">
+
+        <h2>
+            🏠 Startseite
+        </h2>
+
+
+        <div class="settings-card">
+
+            <div class="settings-info">
+
+                <strong>
+                    Home als Startseite
+                </strong>
+
+                <span>
+                    HomeHub startet immer mit dem Dashboard.
+                </span>
+
+            </div>
+
+
+            <span class="settings-status">
+                Aktiv
+            </span>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- DATEN -->
+
+    <div class="settings-section">
+
+        <h2>
+            💾 Daten
+        </h2>
+
+
+        <div class="settings-card">
+
+            <div class="settings-info">
+
+                <strong>
+                    Lokale Speicherung
+                </strong>
+
+                <span>
+                    Deine Daten werden auf diesem Gerät gespeichert.
+                </span>
+
+            </div>
+
+
+            <span class="settings-status">
+                Aktiv
+            </span>
+
+        </div>
+
+<div class="settings-card">
+
+    <div class="settings-info">
+
+        <strong>Daten sichern</strong>
+
+        <span>
+            Speichere deine HomeHub-Daten als Datei.
+        </span>
+
+    </div>
+
+    <button
+        class="settings-action"
+        onclick="exportHomeHubData()"
+    >
+        💾 Sichern
+    </button>
+
+</div>
+
+
+<div class="settings-card">
+
+    <div class="settings-info">
+
+        <strong>Daten wiederherstellen</strong>
+
+        <span>
+            Lade eine zuvor gespeicherte HomeHub-Datei.
+        </span>
+
+    </div>
+
+    <button
+        class="settings-action"
+        onclick="document.getElementById('importFile').click()"
+    >
+        📥 Laden
+    </button>
+
+</div>
+
+<input
+    type="file"
+    id="importFile"
+    accept=".json"
+    style="display: none"
+    onchange="importHomeHubData(event)"
+>
+
+        <div class="settings-card danger-card">
+
+            <div class="settings-info">
+
+                <strong>
+                    Daten löschen
+                </strong>
+
+                <span>
+                    Löscht alle gespeicherten HomeHub-Daten.
+                </span>
+
+            </div>
+
+
+            <button
+                class="settings-danger"
+                onclick="clearHomeHubData()"
+            >
+                Löschen
+            </button>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ÜBER -->
+
+    <div class="settings-section">
+
+        <h2>
+            ℹ️ Über HomeHub
+        </h2>
+
+
+        <div class="settings-card">
+
+            <div class="settings-info">
+
+                <strong>
+                    HomeHub
+                </strong>
+
+                <span>
+                    Deine persönliche Haushaltszentrale.
+                </span>
+
+            </div>
+
+
+            <span class="settings-version">
+                Version 1.0
+            </span>
+
+        </div>
+
     </main>
 
+<script src="script.js"></script>
 
-    <script src="script.js"></script>
 
 </body>
 </html>

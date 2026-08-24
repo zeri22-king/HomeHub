@@ -1471,3 +1471,146 @@ body {
     }
 
 }
+
+/* =================================
+   EINSTELLUNGEN
+================================= */
+
+.settings-section {
+    margin-top: 32px;
+    max-width: 900px;
+}
+
+.settings-section h2 {
+    font-size: 20px;
+    margin-bottom: 14px;
+    color: #111827;
+}
+
+.settings-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+
+    padding: 20px 22px;
+    margin-bottom: 12px;
+
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.05);
+}
+
+.settings-info {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.settings-info strong {
+    font-size: 16px;
+    color: #111827;
+}
+
+.settings-info span {
+    font-size: 14px;
+    color: #64748b;
+}
+
+.settings-action {
+    border: none;
+    border-radius: 10px;
+
+    padding: 10px 16px;
+
+    background: #111827;
+    color: white;
+
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.settings-action:hover {
+    opacity: 0.9;
+}
+
+.settings-status {
+    padding: 7px 12px;
+
+    border-radius: 999px;
+
+    background: #ecfdf5;
+    color: #059669;
+
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.settings-version {
+    color: #64748b;
+    font-size: 14px;
+}
+
+.danger-card {
+    border-color: #fee2e2;
+}
+
+.settings-danger {
+    border: none;
+    border-radius: 10px;
+
+    padding: 10px 16px;
+
+    background: #fee2e2;
+    color: #dc2626;
+
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.settings-danger:hover {
+    background: #fecaca;
+}
+
+
+/* =================================
+   DARK MODE – EINSTELLUNGEN
+================================= */
+
+body.dark-mode .settings-section h2 {
+    color: white;
+}
+
+body.dark-mode .settings-card {
+    background: #1e293b;
+    border-color: #334155;
+    box-shadow: none;
+}
+
+body.dark-mode .settings-info strong {
+    color: white;
+}
+
+body.dark-mode .settings-info span {
+    color: #94a3b8;
+}
+
+body.dark-mode .settings-version {
+    color: #94a3b8;
+}
+
+body.dark-mode .settings-action {
+    background: #334155;
+}
+
+body.dark-mode .danger-card {
+    border-color: #7f1d1d;
+}
+
+body.dark-mode .settings-danger {
+    background: #450a0a;
+    color: #fca5a5;
+}
