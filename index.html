@@ -525,6 +525,31 @@
                 placeholder="Notiz (optional)"
             >
 
+<select id="eventRepeat">
+    <option value="none">Keine Wiederholung</option>
+    <option value="daily">Jeden Tag</option>
+    <option value="weekly">Jede Woche</option>
+    <option value="monthly">Jeden Monat</option>
+</select>
+
+<select id="eventCategory">
+    <option value="none">Keine Kategorie</option>
+    <option value="work">💼 Arbeit</option>
+    <option value="sport">🏋️ Sport</option>
+    <option value="free">🎮 Freizeit</option>
+    <option value="important">⭐ Wichtig</option>
+    <option value="other">📌 Sonstiges</option>
+</select>
+
+<select id="eventReminder">
+    <option value="none">🔕 Keine Erinnerung</option>
+    <option value="5">🔔 5 Minuten vorher</option>
+    <option value="15">🔔 15 Minuten vorher</option>
+    <option value="30">🔔 30 Minuten vorher</option>
+    <option value="60">🔔 1 Stunde vorher</option>
+    <option value="1440">🔔 1 Tag vorher</option>
+</select>
+
             <button
                 class="primary-button"
                 onclick="addCalendarEvent()"

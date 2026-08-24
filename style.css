@@ -1926,3 +1926,140 @@ body.dark-mode .calendar-week-event small {
     border-radius: 10px;
     flex-shrink: 0;
 }
+
+/* ========================================
+   KALENDER-KATEGORIEN
+   ======================================== */
+
+.event-category {
+    display: inline-block;
+    margin-top: 5px;
+    padding: 4px 9px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* Arbeit */
+.category-work {
+    background: #e8f0ff;
+    color: #2563eb;
+}
+
+/* Sport */
+.category-sport {
+    background: #e8f8ee;
+    color: #16a34a;
+}
+
+/* Freizeit */
+.category-free {
+    background: #f3eaff;
+    color: #9333ea;
+}
+
+/* Wichtig */
+.category-important {
+    background: #fff4d6;
+    color: #d97706;
+}
+
+/* Sonstiges */
+.category-other {
+    background: #f1f3f5;
+    color: #64748b;
+}
+
+/* ========================================
+   KATEGORIEN IN DER WOCHENANSICHT
+   ======================================== */
+
+.calendar-week-event.category-work {
+    background: #e8f0ff;
+    border-left: 4px solid #2563eb;
+}
+
+.calendar-week-event.category-sport {
+    background: #e8f8ee;
+    border-left: 4px solid #16a34a;
+}
+
+.calendar-week-event.category-free {
+    background: #f3eaff;
+    border-left: 4px solid #9333ea;
+}
+
+.calendar-week-event.category-important {
+    background: #fff4d6;
+    border-left: 4px solid #d97706;
+}
+
+.calendar-week-event.category-other {
+    background: #f1f3f5;
+    border-left: 4px solid #64748b;
+}
+
+/* ========================================
+   HOMEHUB ERINNERUNG
+   ======================================== */
+
+.homehub-reminder {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 9999;
+
+    display: flex;
+    align-items: center;
+    gap: 14px;
+
+    min-width: 300px;
+    max-width: 380px;
+
+    padding: 16px 18px;
+
+    background: white;
+    border: 1px solid #dbe3f0;
+    border-left: 4px solid #2563eb;
+    border-radius: 14px;
+
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.homehub-reminder-icon {
+    font-size: 26px;
+}
+
+.homehub-reminder-content {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+}
+
+.homehub-reminder-content strong {
+    font-size: 13px;
+    color: #2563eb;
+}
+
+.homehub-reminder-content span {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.homehub-reminder-content small {
+    font-size: 12px;
+    color: #64748b;
+}
+
+.homehub-reminder-close {
+    border: none;
+    background: transparent;
+    font-size: 22px;
+    color: #64748b;
+    cursor: pointer;
+}
+
+.homehub-reminder-close:hover {
+    color: #111827;
+}

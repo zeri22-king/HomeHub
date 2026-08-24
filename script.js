@@ -1360,6 +1360,10 @@ function addCalendarEvent() {
     const time = document.getElementById("eventTime").value;
     const note = document.getElementById("eventNote").value.trim();
 
+    const repeat = document.getElementById("eventRepeat").value;
+    const category = document.getElementById("eventCategory").value;
+    const reminder = document.getElementById("eventReminder").value;
+
     if (!title || !date) {
         alert("Bitte gib mindestens einen Titel und ein Datum ein.");
         return;
@@ -1369,37 +1373,243 @@ function addCalendarEvent() {
         localStorage.getItem("homeHubCalendar") || "[]"
     );
 
-    const newEvent = {
-        id: Date.now(),
-        title: title,
-        date: date,
-        time: time,
-        note: note
-    };
+// ========================================
+// BESTEHENDEN TERMIN BEARBEITEN
+// ========================================
 
-    events.push(newEvent);
+if (window.editingCalendarEventId) {
+
+    const oldEvent = events.find(function(event) {
+        return event.id === window.editingCalendarEventId;
+    });
+
+    if (!oldEvent) {
+        return;
+    }
+
+    // ========================================
+    // WIEDERHOLUNG ODER NEUER EINZELTERMIN
+    // ========================================
+
+    // Alten Termin bzw. alte Serie entfernen
+    if (oldEvent.repeatGroupId) {
+
+        events = events.filter(function(event) {
+            return event.repeatGroupId !== oldEvent.repeatGroupId;
+        });
+
+    } else {
+
+        events = events.filter(function(event) {
+            return event.id !== oldEvent.id;
+        });
+
+    }
+
+    // ========================================
+    // ANZAHL DER NEUEN TERMINE
+    // ========================================
+
+    let count = 1;
+
+    if (repeat === "daily") {
+        count = 30;
+    }
+
+    if (repeat === "weekly") {
+        count = 52;
+    }
+
+    if (repeat === "monthly") {
+        count = 12;
+    }
+
+    // Gemeinsame ID für eine neue Wiederholung
+    const newGroupId =
+        repeat !== "none" ? Date.now() : null;
+
+    const startDate = new Date(
+        date + "T" + (time || "00:00")
+    );
+
+    // ========================================
+    // NEUE TERMINE ERSTELLEN
+    // ========================================
+
+    for (let i = 0; i < count; i++) {
+
+        const eventDate = new Date(startDate);
+
+        if (repeat === "daily") {
+            eventDate.setDate(
+                eventDate.getDate() + i
+            );
+        }
+
+        if (repeat === "weekly") {
+            eventDate.setDate(
+                eventDate.getDate() + (i * 7)
+            );
+        }
+
+        if (repeat === "monthly") {
+            eventDate.setMonth(
+                eventDate.getMonth() + i
+            );
+        }
+
+        const year = eventDate.getFullYear();
+
+        const month = String(
+            eventDate.getMonth() + 1
+        ).padStart(2, "0");
+
+        const day = String(
+            eventDate.getDate()
+        ).padStart(2, "0");
+
+        events.push({
+            id: Date.now() + i,
+            repeatGroupId: newGroupId,
+            title: title,
+            date: `${year}-${month}-${day}`,
+            time: time,
+            note: note,
+            repeat: repeat,
+            category: category,
+            reminder: reminder
+        });
+    }
+
+    // Bearbeitungsmodus beenden
+    window.editingCalendarEventId = null;
+
+}
+    // ========================================
+    // NEUEN TERMIN ERSTELLEN
+    // ========================================
+
+    else {
+
+    const startDate = new Date(
+        date + "T" + (time || "00:00")
+    );
+
+    let count = 1;
+
+    if (repeat === "daily") {
+        count = 30;
+    }
+
+    if (repeat === "weekly") {
+        count = 52;
+    }
+
+    if (repeat === "monthly") {
+        count = 12;
+    }
+
+    const repeatGroupId = repeat !== "none" ? Date.now() : null;
+
+    for (let i = 0; i < count; i++) {
+
+        const eventDate = new Date(startDate);
+
+        if (repeat === "daily") {
+            eventDate.setDate(
+                eventDate.getDate() + i
+            );
+        }
+
+        if (repeat === "weekly") {
+            eventDate.setDate(
+                eventDate.getDate() + (i * 7)
+            );
+        }
+
+        if (repeat === "monthly") {
+            eventDate.setMonth(
+                eventDate.getMonth() + i
+            );
+        }
+
+        const formattedDate =
+            eventDate.toISOString().slice(0, 10);
+
+        const newEvent = {
+            id: Date.now() + i,
+            repeatGroupId: repeatGroupId,
+            title: title,
+            date: formattedDate,
+            time: time,
+            note: note,
+            repeat: repeat,
+            category: category,
+            reminder: reminder
+        };
+
+        events.push(newEvent);
+    }
+
+}
+
+    // ========================================
+    // TERMINE SORTIEREN
+    // ========================================
 
     events.sort(function(a, b) {
-        const dateA = new Date(a.date + "T" + (a.time || "00:00"));
-        const dateB = new Date(b.date + "T" + (b.time || "00:00"));
+
+        const dateA = new Date(
+            a.date + "T" + (a.time || "00:00")
+        );
+
+        const dateB = new Date(
+            b.date + "T" + (b.time || "00:00")
+        );
 
         return dateA - dateB;
+
     });
+
+    // ========================================
+    // SPEICHERN
+    // ========================================
 
     localStorage.setItem(
         "homeHubCalendar",
         JSON.stringify(events)
     );
 
+    // ========================================
+    // EINGABEFELDER LEEREN
+    // ========================================
+
     document.getElementById("eventTitle").value = "";
     document.getElementById("eventDate").value = "";
     document.getElementById("eventTime").value = "";
     document.getElementById("eventNote").value = "";
+    document.getElementById("eventRepeat").value = "none";
+
+    // ========================================
+    // BUTTON ZURÜCKSETZEN
+    // ========================================
+
+    const button = document.querySelector(
+        ".form-card .primary-button"
+    );
+
+    if (button) {
+        button.textContent = "+ Termin hinzufügen";
+    }
+
+    // ========================================
+    // ANZEIGEN AKTUALISIEREN
+    // ========================================
 
     renderCalendarEvents();
     renderHomeCalendar();
+    renderWeekCalendar();
 }
-
 
 
 // =================================
@@ -1513,6 +1723,11 @@ function renderWeekCalendar() {
                 const button = document.createElement("button");
                 button.type = "button";
                 button.className = "calendar-week-event";
+
+if (event.category && event.category !== "none") {
+    button.classList.add("category-" + event.category);
+}
+
                 button.title = "Termin löschen";
 
                 const titleEl = document.createElement("strong");
@@ -1594,14 +1809,28 @@ function renderCalendarEvents() {
         );
 
         li.innerHTML = `
-            <div class="calendar-event-info">
+    <div class="calendar-event-info">
+        <strong>${event.title}</strong>
 
-                <strong>${event.title}</strong>
+        ${
+            event.category && event.category !== "none"
+                ? `<span class="event-category category-${event.category}">
+                    ${
+                        event.category === "work" ? "💼 Arbeit" :
+                        event.category === "sport" ? "🏋️ Sport" :
+                        event.category === "free" ? "🎮 Freizeit" :
+                        event.category === "important" ? "⭐ Wichtig" :
+                        event.category === "other" ? "📌 Sonstiges" :
+                        ""
+                    }
+                </span>`
+                : ""
+        }
 
-                <span>
-                    📅 ${formattedDate}
-                    ${event.time ? " · 🕐 " + event.time : ""}
-                </span>
+        <span>
+            📅 ${formattedDate}
+            ${event.time ? " · 🕘 " + event.time : ""}
+        </span>
 
                 ${
                     event.note
@@ -1610,6 +1839,13 @@ function renderCalendarEvents() {
                 }
 
             </div>
+
+<button
+    class="secondary-button"
+    onclick="editCalendarEvent(${event.id})"
+>
+    ✏️ Bearbeiten
+</button>
 
             <button
                 class="settings-danger"
@@ -1623,31 +1859,164 @@ function renderCalendarEvents() {
     });
 }
 
+// ================================
+// TERMIN BEARBEITEN
+// ================================
+
+function editCalendarEvent(id) {
+
+    const events = JSON.parse(
+        localStorage.getItem("homeHubCalendar") || "[]"
+    );
+
+    const event = events.find(function(event) {
+        return event.id === id;
+    });
+
+    if (!event) {
+        return;
+    }
+
+    document.getElementById("eventTitle").value =
+        event.title || "";
+
+    document.getElementById("eventDate").value =
+        event.date || "";
+
+    document.getElementById("eventTime").value =
+        event.time || "";
+
+    document.getElementById("eventNote").value =
+        event.note || "";
+
+    document.getElementById("eventCategory").value =
+        event.category || "none";
+
+    document.getElementById("eventRepeat").value =
+        event.repeat || "none";
+
+    document.getElementById("eventReminder").value =
+        event.reminder || "none";
+
+    // Termin-ID merken
+    window.editingCalendarEventId = id;
+
+    // Zum Eingabebereich scrollen
+    document.getElementById("eventTitle").scrollIntoView({
+        behavior: "smooth",
+        block: "center"
+    });
+
+    // Button ändern
+    const button = document.querySelector(
+        '.form-card .primary-button'
+    );
+
+    if (button) {
+        button.textContent = "💾 Änderungen speichern";
+    }
+}
 
 // =================================
 // TERMIN LÖSCHEN
 // =================================
-
 function deleteCalendarEvent(id) {
 
     let events = JSON.parse(
         localStorage.getItem("homeHubCalendar") || "[]"
     );
 
-    events = events.filter(function(event) {
-        return event.id !== id;
+    const event = events.find(function(event) {
+        return event.id === id;
     });
+
+    if (!event) {
+        return;
+    }
+
+    // ========================================
+    // WIEDERHOLENDER TERMIN
+    // ========================================
+
+    if (event.repeatGroupId) {
+
+        const choice = prompt(
+            "Dieser Termin gehört zu einer Wiederholung.\n\n" +
+            "Was möchtest du löschen?\n\n" +
+            "1 = Nur diesen Termin\n" +
+            "2 = Alle Wiederholungen\n\n" +
+            "Abbrechen = Nichts löschen"
+        );
+
+        // Abbrechen
+        if (choice === null) {
+            return;
+        }
+
+        // Nur diesen Termin
+        if (choice === "1") {
+
+            events = events.filter(function(item) {
+                return item.id !== id;
+            });
+
+        }
+
+        // Alle Wiederholungen
+        else if (choice === "2") {
+
+            events = events.filter(function(item) {
+                return item.repeatGroupId !== event.repeatGroupId;
+            });
+
+        }
+
+        // Ungültige Eingabe
+        else {
+
+            alert(                "Bitte gib nur 1 oder 2 ein."
+            );
+
+            return;
+        }
+    }
+
+    // ========================================
+    // NORMALER TERMIN
+    // ========================================
+
+    else {
+
+        const deleteOne = confirm(
+            "Möchtest du diesen Termin wirklich löschen?"
+        );
+
+        if (!deleteOne) {
+            return;
+        }
+
+        events = events.filter(function(item) {
+            return item.id !== id;
+        });
+    }
+
+    // ========================================
+    // SPEICHERN
+    // ========================================
 
     localStorage.setItem(
         "homeHubCalendar",
         JSON.stringify(events)
     );
 
+    // ========================================
+    // ALLES AKTUALISIEREN
+    // ========================================
+
     renderCalendarEvents();
     renderHomeCalendar();
     renderWeekCalendar();
 }
-
 // =================================
 // KALENDER AUF DER STARTSEITE
 // =================================
@@ -1783,3 +2152,91 @@ if (eventKey === todayKey) {
         list.appendChild(item);
     });
 }
+
+// ========================================
+// TERMINDERINNERUNGEN
+// ========================================
+
+function checkCalendarReminders() {
+    const events = JSON.parse(
+        localStorage.getItem("homeHubCalendar") || "[]"
+    );
+
+    const now = new Date();
+
+    events.forEach(function(event) {
+
+        if (!event.reminder || event.reminder === "none") {
+            return;
+        }
+
+        if (!event.time) {
+            return;
+        }
+
+        const eventDateTime = new Date(
+            event.date + "T" + event.time
+        );
+
+        const reminderTime = new Date(eventDateTime);
+
+        reminderTime.setMinutes(
+            reminderTime.getMinutes() - Number(event.reminder)
+        );
+
+        const difference = now - reminderTime;
+
+        // Erinnerung nur innerhalb eines kurzen Zeitfensters auslösen
+        if (difference >= 0 && difference < 60000) {
+
+            const reminderKey =
+                "homeHubReminder_" + event.id;
+
+            // Nicht mehrfach für denselben Termin anzeigen
+            if (localStorage.getItem(reminderKey)) {
+                return;
+            }
+
+            localStorage.setItem(reminderKey, "shown");
+
+         const reminderBox = document.createElement("div");
+
+reminderBox.className = "homehub-reminder";
+
+reminderBox.innerHTML = `
+    <div class="homehub-reminder-icon">🔔</div>
+    <div class="homehub-reminder-content">
+        <strong>Erinnerung</strong>
+        <span>${event.title}</span>
+        ${
+            event.time
+                ? `<small>🕐 ${event.time} Uhr</small>`
+                : ""
+        }
+    </div>
+    <button class="homehub-reminder-close">×</button>
+`;
+
+document.body.appendChild(reminderBox);
+
+reminderBox
+    .querySelector(".homehub-reminder-close")
+    .addEventListener("click", function () {
+        reminderBox.remove();
+    });
+
+setTimeout(function () {
+    if (reminderBox.parentElement) {
+        reminderBox.remove();
+    }
+}, 15000);   
+
+        }
+    });
+}
+
+// Alle 30 Sekunden prüfen
+setInterval(checkCalendarReminders, 30000);
+
+// Direkt beim Laden prüfen
+checkCalendarReminders();
