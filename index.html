@@ -18,9 +18,9 @@
     <aside class="sidebar">
 
         <div class="logo">
-            <span>🏠</span>
-            <strong>HomeHub</strong>
-        </div>
+    <img src="icon.png" alt="HomeHub Logo">
+    <strong>HomeHub</strong>
+</div>
 
         <nav>
 
@@ -47,6 +47,14 @@
                 <span>🧹</span>
                 Haushalt
             </button>
+
+<button
+    class="nav-button"
+    onclick="showPage('calendar')"
+>
+    <span>📅</span>
+    Kalender
+</button>
 
 <button
     class="nav-button"
@@ -221,6 +229,29 @@
 
 </div>
             
+<!-- KALENDER AUF DER STARTSEITE -->
+
+<div class="today-calendar">
+
+    <div class="section-title">
+
+        <div>
+            <span class="eyebrow">KALENDER</span>
+            <h2>Heute & kommende Termine</h2>
+        </div>
+
+        <button
+            class="secondary-button"
+            onclick="showPage('calendar')"
+        >
+            📅 Kalender öffnen
+        </button>
+
+    </div>
+
+    <div id="homeCalendarList"></div>
+
+</div>
 
         </section>
 
@@ -439,9 +470,117 @@
 
         </section>
 
- 
+<!-- ================================
+     KALENDER
+================================ -->
+
+<section id="calendar" class="page">
+
+    <header class="page-header">
+
+        <div>
+
+            <p class="eyebrow">
+                PLANUNG
+            </p>
+
+            <h1>
+                📅 Kalender
+            </h1>
+
+            <p class="subtitle">
+                Behalte deine Termine im Blick.
+            </p>
+
+        </div>
+
+    </header>
 
 
+    <!-- TERMIN HINZUFÜGEN -->
+
+    <div class="form-card">
+
+        <div class="form-grid">
+
+            <input
+                id="eventTitle"
+                type="text"
+                placeholder="Termin, z. B. Arzttermin"
+            >
+
+            <input
+                id="eventDate"
+                type="date"
+            >
+
+            <input
+                id="eventTime"
+                type="time"
+            >
+
+            <input
+                id="eventNote"
+                type="text"
+                placeholder="Notiz (optional)"
+            >
+
+            <button
+                class="primary-button"
+                onclick="addCalendarEvent()"
+            >
+                + Termin hinzufügen
+            </button>
+
+        </div>
+
+    </div>
+
+    <!-- WOCHENANSICHT -->
+    <div class="calendar-week-section">
+        <div class="calendar-week-header">
+            <div>
+                <p class="eyebrow">WOCHENANSICHT</p>
+                <h2 id="weekTitle">Diese Woche</h2>
+            </div>
+
+            <div class="calendar-week-actions">
+                <button class="secondary-button" onclick="changeCalendarWeek(-1)">
+                    ←
+                </button>
+                <button class="secondary-button" onclick="goToCurrentCalendarWeek()">
+                    Heute
+                </button>
+                <button class="secondary-button" onclick="changeCalendarWeek(1)">
+                    →
+                </button>
+            </div>
+        </div>
+
+        <div id="calendarWeekGrid" class="calendar-week-grid"></div>
+    </div>
+
+<!-- TERMINE -->
+
+    <div class="list-header">
+
+        <div>
+
+            <p class="eyebrow">
+                DEINE TERMINE
+            </p>
+
+            <h2>
+                Kommende Termine
+            </h2>
+
+        </div>
+
+    </div>
+
+    <ul id="calendarList"></ul>
+
+</section>
 
 <!-- ================================
      EINSTELLUNGEN
@@ -678,7 +817,11 @@
 
         </div>
 
-    </main>
+    </div>
+
+</div>
+
+</main>
 
 <script src="script.js"></script>
 

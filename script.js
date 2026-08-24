@@ -1,3 +1,5 @@
+let calendarWeekOffset = 0;
+
 // ================================
 // NAVIGATION
 // ================================
@@ -47,7 +49,14 @@ function showPage(pageId) {
 
 
     // Dashboard aktualisieren
-    updateHome();
+updateHome();
+
+// Kalender aktualisieren
+if (pageId === "calendar") {
+    renderCalendarEvents();
+    renderWeekCalendar();
+}
+
 }
 
 
@@ -711,7 +720,7 @@ function updateHome() {
     // Heute aktualisieren
 
     updateTodayPanel();
-
+renderHomeCalendar();
 
     // Fortschritt aktualisieren
 
@@ -1138,9 +1147,12 @@ updateShoppingList();
 
 updateTasks();
 
+renderCalendarEvents();
+renderWeekCalendar();
 updateHome();
 
 showPage("home");
+setTimeout(renderWeekCalendar, 50);
 // ================================
 // DARK MODE
 // ================================
@@ -1335,4 +1347,439 @@ function importHomeHubData(event) {
     };
 
     reader.readAsText(file);
+}
+
+// =================================
+// KALENDER
+// =================================
+
+function addCalendarEvent() {
+
+    const title = document.getElementById("eventTitle").value.trim();
+    const date = document.getElementById("eventDate").value;
+    const time = document.getElementById("eventTime").value;
+    const note = document.getElementById("eventNote").value.trim();
+
+    if (!title || !date) {
+        alert("Bitte gib mindestens einen Titel und ein Datum ein.");
+        return;
+    }
+
+    let events = JSON.parse(
+        localStorage.getItem("homeHubCalendar") || "[]"
+    );
+
+    const newEvent = {
+        id: Date.now(),
+        title: title,
+        date: date,
+        time: time,
+        note: note
+    };
+
+    events.push(newEvent);
+
+    events.sort(function(a, b) {
+        const dateA = new Date(a.date + "T" + (a.time || "00:00"));
+        const dateB = new Date(b.date + "T" + (b.time || "00:00"));
+
+        return dateA - dateB;
+    });
+
+    localStorage.setItem(
+        "homeHubCalendar",
+        JSON.stringify(events)
+    );
+
+    document.getElementById("eventTitle").value = "";
+    document.getElementById("eventDate").value = "";
+    document.getElementById("eventTime").value = "";
+    document.getElementById("eventNote").value = "";
+
+    renderCalendarEvents();
+    renderHomeCalendar();
+}
+
+
+
+// =================================
+// WOCHENANSICHT
+// =================================
+
+function getStartOfWeek(date) {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
+    d.setDate(d.getDate() + diff);
+    d.setHours(0, 0, 0, 0);
+    return d;
+}
+
+function formatDateKey(date) {
+    return [
+        date.getFullYear(),
+        String(date.getMonth() + 1).padStart(2, "0"),
+        String(date.getDate()).padStart(2, "0")
+    ].join("-");
+}
+
+function changeCalendarWeek(direction) {
+    calendarWeekOffset += Number(direction) || 0;
+    renderWeekCalendar();
+}
+
+function goToCurrentCalendarWeek() {
+    calendarWeekOffset = 0;
+    renderWeekCalendar();
+}
+
+function renderWeekCalendar() {
+    const grid = document.getElementById("calendarWeekGrid");
+    const title = document.getElementById("weekTitle");
+
+    if (!grid) return;
+
+    // Stelle sicher, dass der Bereich sichtbar ist, auch wenn eine alte CSS-Regel greift.
+    grid.style.display = "grid";
+    grid.style.visibility = "visible";
+
+    let events = [];
+    try {
+        events = JSON.parse(localStorage.getItem("homeHubCalendar") || "[]");
+        if (!Array.isArray(events)) events = [];
+    } catch (error) {
+        events = [];
+    }
+
+    const today = new Date();
+    let start = getStartOfWeek(today);
+    start.setDate(start.getDate() + calendarWeekOffset * 7);
+
+    const end = new Date(start);
+    end.setDate(end.getDate() + 6);
+
+    if (title) {
+        const from = start.toLocaleDateString("de-DE", {
+            day: "2-digit",
+            month: "2-digit"
+        });
+        const to = end.toLocaleDateString("de-DE", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric"
+        });
+        title.textContent = `${from} – ${to}`;
+    }
+
+    grid.innerHTML = "";
+
+    const weekdays = [
+        "Montag", "Dienstag", "Mittwoch", "Donnerstag",
+        "Freitag", "Samstag", "Sonntag"
+    ];
+
+    for (let i = 0; i < 7; i++) {
+        const day = new Date(start);
+        day.setDate(start.getDate() + i);
+
+        const key = formatDateKey(day);
+        const isToday = key === formatDateKey(today);
+
+        const dayEvents = events
+            .filter(event => String(event.date || "") === key)
+            .sort((a, b) => String(a.time || "23:59").localeCompare(String(b.time || "23:59")));
+
+        const card = document.createElement("div");
+        card.className = "calendar-day-card" + (isToday ? " today" : "");
+
+        const header = document.createElement("div");
+        header.className = "calendar-day-header";
+        header.innerHTML = `
+            <span>${weekdays[i]}</span>
+            <strong>${String(day.getDate()).padStart(2, "0")}</strong>
+        `;
+        card.appendChild(header);
+
+        const eventsBox = document.createElement("div");
+        eventsBox.className = "calendar-day-events";
+
+        if (dayEvents.length === 0) {
+            const empty = document.createElement("div");
+            empty.className = "calendar-no-event";
+            empty.textContent = "Keine Termine";
+            eventsBox.appendChild(empty);
+        } else {
+            dayEvents.forEach(event => {
+                const button = document.createElement("button");
+                button.type = "button";
+                button.className = "calendar-week-event";
+                button.title = "Termin löschen";
+
+                const titleEl = document.createElement("strong");
+                titleEl.textContent = event.title || "Termin";
+                button.appendChild(titleEl);
+
+                const timeEl = document.createElement("span");
+                timeEl.textContent = event.time ? `🕐 ${event.time} Uhr` : "Ganztägig";
+                button.appendChild(timeEl);
+
+                if (event.note) {
+                    const noteEl = document.createElement("small");
+                    noteEl.textContent = `📝 ${event.note}`;
+                    button.appendChild(noteEl);
+                }
+
+                button.addEventListener("click", function () {
+                    deleteCalendarEvent(event.id);
+                });
+
+                eventsBox.appendChild(button);
+            });
+        }
+
+        card.appendChild(eventsBox);
+        grid.appendChild(card);
+    }
+}
+
+// Falls die Startseite beim ersten Laden bereits sichtbar ist, die Woche nach dem DOM-Aufbau nochmals zeichnen.
+window.addEventListener("DOMContentLoaded", function () {
+    setTimeout(renderWeekCalendar, 0);
+});
+
+// =================================
+// TERMINE ANZEIGEN
+// =================================
+
+function renderCalendarEvents() {
+
+    const list = document.getElementById("calendarList");
+
+    if (!list) {
+        return;
+    }
+
+    const events = JSON.parse(
+        localStorage.getItem("homeHubCalendar") || "[]"
+    );
+
+    list.innerHTML = "";
+
+    if (events.length === 0) {
+
+        list.innerHTML = `
+            <li class="empty-state">
+                📅 Noch keine Termine vorhanden.
+            </li>
+        `;
+
+        return;
+    }
+
+    events.forEach(function(event) {
+
+        const li = document.createElement("li");
+
+        li.className = "calendar-event";
+
+        const formattedDate = new Date(
+            event.date + "T00:00:00"
+        ).toLocaleDateString(
+            "de-DE",
+            {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric"
+            }
+        );
+
+        li.innerHTML = `
+            <div class="calendar-event-info">
+
+                <strong>${event.title}</strong>
+
+                <span>
+                    📅 ${formattedDate}
+                    ${event.time ? " · 🕐 " + event.time : ""}
+                </span>
+
+                ${
+                    event.note
+                    ? `<small>${event.note}</small>`
+                    : ""
+                }
+
+            </div>
+
+            <button
+                class="settings-danger"
+                onclick="deleteCalendarEvent(${event.id})"
+            >
+                🗑️ Löschen
+            </button>
+        `;
+
+        list.appendChild(li);
+    });
+}
+
+
+// =================================
+// TERMIN LÖSCHEN
+// =================================
+
+function deleteCalendarEvent(id) {
+
+    let events = JSON.parse(
+        localStorage.getItem("homeHubCalendar") || "[]"
+    );
+
+    events = events.filter(function(event) {
+        return event.id !== id;
+    });
+
+    localStorage.setItem(
+        "homeHubCalendar",
+        JSON.stringify(events)
+    );
+
+    renderCalendarEvents();
+    renderHomeCalendar();
+    renderWeekCalendar();
+}
+
+// =================================
+// KALENDER AUF DER STARTSEITE
+// =================================
+
+function renderHomeCalendar() {
+    const list = document.getElementById("homeCalendarList");
+
+    if (!list) {
+        return;
+    }
+
+    let events = [];
+
+    try {
+        events = JSON.parse(
+            localStorage.getItem("homeHubCalendar") || "[]"
+        );
+
+        if (!Array.isArray(events)) {
+            events = [];
+        }
+    } catch (error) {
+        events = [];
+    }
+
+    list.innerHTML = "";
+
+    const now = new Date();
+
+    const endOfWeek = new Date(now);
+    const day = now.getDay();
+    const daysUntilSunday = day === 0 ? 0 : 7 - day;
+
+    endOfWeek.setDate(
+        now.getDate() + daysUntilSunday
+    );
+
+    endOfWeek.setHours(23, 59, 59, 999);
+
+    const upcomingEvents = events
+        .filter(function(event) {
+            const eventDate = new Date(
+                event.date + "T" + (event.time || "23:59")
+            );
+
+            return eventDate >= now &&
+                   eventDate <= endOfWeek;
+        })
+        .sort(function(a, b) {
+            const dateA = new Date(
+                a.date + "T" + (a.time || "23:59")
+            );
+
+            const dateB = new Date(
+                b.date + "T" + (b.time || "23:59")
+            );
+
+            return dateA - dateB;
+        })
+        .slice(0, 5);
+
+    if (upcomingEvents.length === 0) {
+        list.innerHTML = `
+            <div class="empty-state">
+                📅 Keine weiteren Termine diese Woche.
+            </div>
+        `;
+
+        return;
+    }
+
+    upcomingEvents.forEach(function(event, index) {
+
+        const date = new Date(
+            event.date + "T00:00:00"
+        );
+
+        const todayKey = now.toISOString().slice(0, 10);
+const eventKey = event.date;
+
+const tomorrow = new Date(now);
+tomorrow.setDate(tomorrow.getDate() + 1);
+const tomorrowKey = tomorrow.toISOString().slice(0, 10);
+
+let formattedDate;
+
+if (eventKey === todayKey) {
+    formattedDate = "HEUTE";
+} else if (eventKey === tomorrowKey) {
+    formattedDate = "MORGEN";
+} else {
+    formattedDate = date.toLocaleDateString(
+        "de-DE",
+        {
+            weekday: "short",
+            day: "2-digit",
+            month: "2-digit"
+        }
+    );
+}
+
+        const item = document.createElement("div");
+
+        if (index === 0) {
+            item.className = "home-calendar-item next-event";
+        } else {
+            item.className = "home-calendar-item";
+        }
+
+        item.innerHTML = `
+            
+            <div class="home-calendar-date">
+                <strong>${formattedDate}</strong>
+
+                ${
+                    event.time
+                        ? `<span>🕐 ${event.time} Uhr</span>`
+                        : `<span>Ganztägig</span>`
+                }
+            </div>
+
+            <div class="home-calendar-info">
+                <strong>${event.title || "Termin"}</strong>
+
+                ${
+                    event.note
+                        ? `<span>📝 ${event.note}</span>`
+                        : ""
+                }
+            </div>
+        `;
+
+        list.appendChild(item);
+    });
 }
