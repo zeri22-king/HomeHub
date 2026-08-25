@@ -733,8 +733,7 @@ function updateHome() {
     if (shoppingCount) {
 
         shoppingCount.textContent =
-            openShopping +
-            " offene Artikel";
+            openShopping;
 
     }
 
