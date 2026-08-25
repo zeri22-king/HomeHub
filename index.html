@@ -34,6 +34,14 @@
 
             <button
                 class="nav-button"
+                onclick="showPage('today')"
+            >
+                <span>📋</span>
+                Heute
+            </button>
+
+            <button
+                class="nav-button"
                 onclick="showPage('shopping')"
             >
                 <span>🛒</span>
@@ -255,6 +263,53 @@
 
         </section>
 
+
+
+        <!-- =========================
+             HEUTE
+        ========================== -->
+
+        <section id="today" class="page">
+            <header class="page-header">
+                <div>
+                    <p class="eyebrow">ÜBERSICHT</p>
+                    <h1>📋 Heute</h1>
+                    <p class="subtitle">Alles, was heute noch ansteht.</p>
+                </div>
+            </header>
+
+            <div class="today-page-progress-card">
+                <div class="today-page-progress-top">
+                    <div>
+                        <span class="card-label">Tagesfortschritt</span>
+                        <strong id="todayProgressText">0 von 0 erledigt</strong>
+                    </div>
+                    <span id="todayProgressPercent">0%</span>
+                </div>
+                <div class="today-page-progress"><div id="todayProgressBar"></div></div>
+            </div>
+
+            <div class="today-page-section">
+                <div class="section-title"><div><span class="eyebrow">KALENDER</span><h2>📅 Termine</h2></div></div>
+                <div id="todayEventsList" class="today-page-list"></div>
+            </div>
+
+            <div class="today-page-section">
+                <div class="section-title"><div><span class="eyebrow">HAUSHALT</span><h2>🧹 Aufgaben</h2></div></div>
+                <div id="todayTasksList" class="today-page-list"></div>
+            </div>
+
+            <div class="today-page-section">
+                <div class="section-title"><div><span class="eyebrow">EINKAUF</span><h2>🛒 Einkaufen</h2></div></div>
+                <div id="todayShoppingList" class="today-page-list"></div>
+            </div>
+
+            <div id="todayAllDone" class="today-all-done" style="display:none;">
+                <div class="today-all-done-icon">🎉</div>
+                <strong>Alles erledigt!</strong>
+                <p>Heute steht nichts mehr an.</p>
+            </div>
+        </section>
 
 
         <!-- =========================

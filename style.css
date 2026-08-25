@@ -830,6 +830,128 @@ ul {
 
 
 /* ================================
+   HEUTE-SEITE
+================================ */
+
+.today-page-section { margin-bottom: 36px; }
+
+.today-page-progress-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 20px 22px;
+    margin-bottom: 36px;
+    box-shadow: 0 8px 30px rgba(23, 32, 51, 0.05);
+}
+
+.today-page-progress-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+
+.today-page-progress-top > div { display: flex; flex-direction: column; gap: 6px; }
+.today-page-progress-top > span { font-size: 18px; font-weight: 700; color: var(--primary); }
+
+.today-page-progress {
+    height: 8px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: #edf0f5;
+}
+
+.today-page-progress > div {
+    width: 0;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--green);
+    transition: width 0.45s ease;
+}
+
+.today-page-section .section-title { margin-bottom: 14px; }
+.today-page-list { display: flex; flex-direction: column; gap: 9px; }
+
+.today-page-item,
+.today-empty-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 15px 17px;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.today-page-item:hover {
+    transform: translateX(2px);
+    box-shadow: 0 5px 20px rgba(23, 32, 51, 0.06);
+}
+
+.today-page-icon,
+.today-empty-item > span {
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: #f1f4ff;
+    font-size: 19px;
+}
+
+.today-page-content { flex: 1; min-width: 0; }
+.today-page-content strong { font-size: 15px; }
+.today-page-content p,
+.today-empty-item p { color: var(--muted); font-size: 12px; margin-top: 4px; }
+
+.today-checkbox {
+    width: 19px;
+    height: 19px;
+    flex-shrink: 0;
+    accent-color: var(--primary);
+    cursor: pointer;
+}
+
+.today-page-overdue {
+    border-color: rgba(239, 68, 68, 0.45);
+    background: rgba(239, 68, 68, 0.055);
+}
+
+.today-page-overdue .today-page-icon { background: rgba(239, 68, 68, 0.12); }
+.today-overdue-text { color: var(--red) !important; font-weight: 700; }
+.today-empty-item { color: var(--muted); }
+.today-empty-item strong { color: var(--text); font-size: 15px; }
+
+.today-all-done {
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 7px;
+    text-align: center;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 30px 20px;
+    margin-top: 10px;
+}
+
+.today-all-done-icon { font-size: 34px; margin-bottom: 3px; }
+.today-all-done strong { font-size: 18px; }
+.today-all-done p { color: var(--muted); font-size: 13px; }
+
+body.dark-mode .today-page-overdue {
+    background: rgba(239, 68, 68, 0.10);
+    border-color: rgba(239, 68, 68, 0.42);
+}
+
+body.dark-mode .today-page-progress { background: #293449; }
+
+
+/* ================================
    MOBILE / KLEINERE BILDSCHIRME
 ================================ */
 
@@ -2324,7 +2446,7 @@ button:active {
     .sidebar nav {
         width: 100%;
         display: grid;
-        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-template-columns: repeat(6, minmax(0, 1fr));
         gap: 4px;
         margin: 0;
     }
@@ -2670,4 +2792,15 @@ button:active {
     .calendar-delete-menu-box {
         animation: none !important;
     }
+}
+
+
+@media (max-width: 600px) {
+    .today-page-progress-card { padding: 17px; margin-bottom: 28px; }
+    .today-page-section { margin-bottom: 28px; }
+    .today-page-item, .today-empty-item { padding: 13px; gap: 10px; }
+    .today-page-item .small-action { padding: 8px 9px; font-size: 11px; }
+    .today-page-content strong { font-size: 14px; }
+    .today-page-content p, .today-empty-item p { font-size: 11px; }
+    .today-page-progress-top > span { font-size: 16px; }
 }

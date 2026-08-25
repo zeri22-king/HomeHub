@@ -711,7 +711,8 @@ function updateHome() {
     // Heute aktualisieren
 
     updateTodayPanel();
-renderHomeCalendar();
+    renderHomeCalendar();
+    updateTodayPage();
 
     // Fortschritt aktualisieren
 
@@ -948,6 +949,178 @@ function updateTodayPanel() {
 
 }
 
+
+
+// ================================
+// HEUTE-SEITE
+// ================================
+
+function updateTodayPage() {
+
+    const eventsList = document.getElementById("todayEventsList");
+    const tasksList = document.getElementById("todayTasksList");
+    const shoppingList = document.getElementById("todayShoppingList");
+    const allDone = document.getElementById("todayAllDone");
+    const progressText = document.getElementById("todayProgressText");
+    const progressPercent = document.getElementById("todayProgressPercent");
+    const progressBar = document.getElementById("todayProgressBar");
+
+    if (!eventsList || !tasksList || !shoppingList) return;
+
+    const todayString = formatDate(new Date());
+    const events = JSON.parse(localStorage.getItem("homeHubCalendar") || "[]");
+
+    const todayEvents = events
+        .filter(event => event.date === todayString)
+        .sort((a, b) => {
+            if (!a.time && !b.time) return 0;
+            if (!a.time) return 1;
+            if (!b.time) return -1;
+            return a.time.localeCompare(b.time);
+        });
+
+    eventsList.innerHTML = "";
+
+    if (todayEvents.length === 0) {
+        eventsList.innerHTML = `
+            <div class="today-empty-item">
+                <span>📅</span>
+                <div>
+                    <strong>Keine Termine heute</strong>
+                    <p>Dein Kalender ist heute frei.</p>
+                </div>
+            </div>
+        `;
+    } else {
+        todayEvents.forEach(event => {
+            const item = document.createElement("div");
+            item.className = "today-page-item";
+
+            const categoryText =
+                event.category && event.category !== "none"
+                    ? (
+                        event.category === "work" ? "💼 Arbeit" :
+                        event.category === "sport" ? "🏋️ Sport" :
+                        event.category === "free" ? "🎮 Freizeit" :
+                        event.category === "important" ? "⭐ Wichtig" :
+                        event.category === "other" ? "📌 Sonstiges" : ""
+                    )
+                    : "";
+
+            const meta = [
+                event.time ? `🕘 ${event.time}` : "Keine Uhrzeit",
+                categoryText,
+                event.repeat && event.repeat !== "none" ? "🔁" : "",
+                event.reminder && event.reminder !== "none" ? "🔔" : ""
+            ].filter(Boolean).join(" · ");
+
+            item.innerHTML = `
+                <div class="today-page-icon">📅</div>
+                <div class="today-page-content">
+                    <strong>${escapeHTML(event.title)}</strong>
+                    <p>${escapeHTML(meta)}</p>
+                </div>
+                <button class="small-action" onclick="showCalendarEventMenu(${event.id})">Öffnen</button>
+            `;
+
+            eventsList.appendChild(item);
+        });
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const dueTasks = tasks
+        .map((task, index) => ({ task, index }))
+        .filter(({ task }) => !task.completed && parseLocalDate(task.dueDate) <= today)
+        .sort((a, b) => parseLocalDate(a.task.dueDate) - parseLocalDate(b.task.dueDate));
+
+    tasksList.innerHTML = "";
+
+    if (dueTasks.length === 0) {
+        tasksList.innerHTML = `
+            <div class="today-empty-item">
+                <span>🧹</span>
+                <div>
+                    <strong>Keine offenen Aufgaben</strong>
+                    <p>Für heute ist nichts mehr fällig.</p>
+                </div>
+            </div>
+        `;
+    } else {
+        dueTasks.forEach(({ task, index }) => {
+            const overdue = parseLocalDate(task.dueDate) < today;
+            const item = document.createElement("div");
+            item.className = `today-page-item ${overdue ? "today-page-overdue" : ""}`;
+
+            item.innerHTML = `
+                <input class="today-checkbox" type="checkbox" onchange="completeTask(${index})">
+                <div class="today-page-icon">🧹</div>
+                <div class="today-page-content">
+                    <strong>${escapeHTML(task.name)}</strong>
+                    <p class="${overdue ? "today-overdue-text" : ""}">
+                        ${overdue ? "🔴 Überfällig" : "Fällig heute"} · ${formatDateGerman(task.dueDate)}
+                    </p>
+                </div>
+                <button class="small-action" onclick="completeTask(${index})">✓ Erledigt</button>
+            `;
+
+            tasksList.appendChild(item);
+        });
+    }
+
+    const openShopping = shoppingItems
+        .map((item, index) => ({ item, index }))
+        .filter(({ item }) => !item.completed);
+
+    shoppingList.innerHTML = "";
+
+    if (openShopping.length === 0) {
+        shoppingList.innerHTML = `
+            <div class="today-empty-item">
+                <span>🛒</span>
+                <div>
+                    <strong>Keine offenen Einkäufe</strong>
+                    <p>Deine Einkaufsliste ist leer.</p>
+                </div>
+            </div>
+        `;
+    } else {
+        openShopping.forEach(({ item, index }) => {
+            const row = document.createElement("div");
+            row.className = "today-page-item";
+            row.innerHTML = `
+                <input class="today-checkbox" type="checkbox" onchange="toggleShoppingItem(${index})">
+                <div class="today-page-icon">🛒</div>
+                <div class="today-page-content">
+                    <strong>${escapeHTML(item.name)}</strong>
+                    <p>${item.quantity}× · ${escapeHTML(item.category)}</p>
+                </div>
+            `;
+            shoppingList.appendChild(row);
+        });
+    }
+
+    const todayTaskTotal = tasks.filter(task => parseLocalDate(task.dueDate) <= today).length;
+    const todayTaskCompleted = tasks.filter(task => parseLocalDate(task.dueDate) <= today && task.completed).length;
+    const shoppingTotal = shoppingItems.length;
+    const shoppingCompleted = shoppingItems.filter(item => item.completed).length;
+
+    const progressTotal = todayTaskTotal + shoppingTotal;
+    const progressDone = todayTaskCompleted + shoppingCompleted;
+    const percentage = progressTotal === 0 ? 0 : Math.round((progressDone / progressTotal) * 100);
+
+    if (progressText) progressText.textContent = `${progressDone} von ${progressTotal} erledigt`;
+    if (progressPercent) progressPercent.textContent = `${percentage}%`;
+    if (progressBar) progressBar.style.width = `${percentage}%`;
+
+    if (allDone) {
+        allDone.style.display =
+            todayEvents.length === 0 && dueTasks.length === 0 && openShopping.length === 0
+                ? "flex"
+                : "none";
+    }
+}
 
 
 // ================================
