@@ -1730,6 +1730,22 @@ if (event.category && event.category !== "none") {
 
                 button.title = "Termin löschen";
 
+const metaEl = document.createElement("div");
+metaEl.className = "calendar-week-meta";
+
+if (event.repeat && event.repeat !== "none") {
+    metaEl.innerHTML += `<span>🔁</span>`;
+}
+
+if (event.reminder && event.reminder !== "none") {
+    metaEl.innerHTML += `<span>🔔</span>`;
+} else {
+    metaEl.innerHTML += `<span>🔕</span>`;
+}
+
+    button.appendChild(metaEl);
+
+
                 const titleEl = document.createElement("strong");
                 titleEl.textContent = event.title || "Termin";
                 button.appendChild(titleEl);
@@ -1745,8 +1761,8 @@ if (event.category && event.category !== "none") {
                 }
 
                 button.addEventListener("click", function () {
-                    deleteCalendarEvent(event.id);
-                });
+    		showCalendarEventMenu(event.id);
+		});
 
                 eventsBox.appendChild(button);
             });
@@ -1827,6 +1843,18 @@ function renderCalendarEvents() {
                 : ""
         }
 
+${
+    event.repeat && event.repeat !== "none"
+        ? `<span class="event-meta">🔁 Wiederholung</span>`
+        : ""
+}
+
+${
+    event.reminder && event.reminder !== "none"
+        ? `<span class="event-meta">🔔 Erinnerung</span>`
+        : ""
+}
+
         <span>
             📅 ${formattedDate}
             ${event.time ? " · 🕘 " + event.time : ""}
@@ -1849,13 +1877,81 @@ function renderCalendarEvents() {
 
             <button
                 class="settings-danger"
-                onclick="deleteCalendarEvent(${event.id})"
+                onclick="showDeleteCalendarMenu(${event.id})"
             >
                 🗑️ Löschen
             </button>
         `;
 
         list.appendChild(li);
+    });
+}
+
+// ========================================
+// TERMIN-MENÜ IN DER WOCHENANSICHT
+// ========================================
+
+function showCalendarEventMenu(id) {
+
+    const oldMenu = document.querySelector(".calendar-event-menu");
+
+    if (oldMenu) {
+        oldMenu.remove();
+    }
+
+    const menu = document.createElement("div");
+
+    menu.className = "calendar-event-menu";
+
+    menu.innerHTML = `
+        <div class="calendar-event-menu-box">
+
+            <strong>Was möchtest du tun?</strong>
+
+            <button class="event-menu-edit">
+                ✏️ Bearbeiten
+            </button>
+
+            <button class="event-menu-delete">
+                🗑️ Löschen
+            </button>
+
+            <button class="event-menu-cancel">
+                ✖️ Abbrechen
+            </button>
+
+        </div>
+    `;
+
+    document.body.appendChild(menu);
+
+    menu.querySelector(".event-menu-edit").addEventListener(
+        "click",
+        function () {
+            menu.remove();
+            editCalendarEvent(id);
+        }
+    );
+
+    menu.querySelector(".event-menu-delete").addEventListener(
+        "click",
+        function () {
+            menu.remove();
+            showDeleteCalendarMenu(id);
+        }
+    );
+
+    menu.querySelector(".event-menu-cancel").addEventListener(
+        "click",
+        function () {
+            menu.remove();
+        }
+    );
+
+    menu.addEventListener("click", function (e) {
+        if (e.target === menu) {
+            menu.remove();
+        }
     });
 }
 
@@ -1917,10 +2013,132 @@ function editCalendarEvent(id) {
     }
 }
 
+function showDeleteCalendarMenu(id) {
+
+    const oldMenu = document.querySelector(".calendar-delete-menu");
+
+    if (oldMenu) {
+        oldMenu.remove();
+    }
+
+    const events = JSON.parse(
+        localStorage.getItem("homeHubCalendar") || "[]"
+    );
+
+    const event = events.find(function(event) {
+        return event.id === id;
+    });
+
+    if (!event) {
+        return;
+    }
+
+    const menu = document.createElement("div");
+
+    menu.className = "calendar-delete-menu";
+
+    // ========================================
+    // WIEDERHOLUNG
+    // ========================================
+
+    if (event.repeatGroupId) {
+
+        menu.innerHTML = `
+            <div class="calendar-delete-menu-box">
+
+                <strong>🗑️ Wiederholung löschen?</strong>
+
+                <button class="delete-menu-one">
+                    🗑️ Nur diesen Termin
+                </button>
+
+                <button class="delete-menu-all">
+                    🗑️ Alle Wiederholungen
+                </button>
+
+                <button class="delete-menu-cancel">
+                    ✖️ Abbrechen
+                </button>
+
+            </div>
+        `;
+
+        document.body.appendChild(menu);
+
+        menu.querySelector(".delete-menu-one").addEventListener(
+            "click",
+            function () {
+                menu.remove();
+                deleteCalendarEvent(id, "one");
+            }
+        );
+
+        menu.querySelector(".delete-menu-all").addEventListener(
+            "click",
+            function () {
+                menu.remove();
+                deleteCalendarEvent(id, "all");
+            }
+        );
+
+    }
+
+    // ========================================
+    // NORMALER TERMIN
+    // ========================================
+
+    else {
+
+        menu.innerHTML = `
+            <div class="calendar-delete-menu-box">
+
+                <strong>🗑️ Termin löschen?</strong>
+
+                <button class="delete-menu-one">
+                    🗑️ Löschen
+                </button>
+
+                <button class="delete-menu-cancel">
+                    ✖️ Abbrechen
+                </button>
+
+            </div>
+        `;
+
+        document.body.appendChild(menu);
+
+        menu.querySelector(".delete-menu-one").addEventListener(
+            "click",
+            function () {
+                menu.remove();
+                deleteCalendarEvent(id, "one");
+            }
+        );
+    }
+
+    // ========================================
+    // ABBRECHEN
+    // ========================================
+
+    menu.querySelector(".delete-menu-cancel").addEventListener(
+        "click",
+        function () {
+            menu.remove();
+        }
+    );
+
+    // Klick neben das Fenster = schließen
+    menu.addEventListener("click", function (e) {
+        if (e.target === menu) {
+            menu.remove();
+        }
+    });
+}
+
 // =================================
 // TERMIN LÖSCHEN
 // =================================
-function deleteCalendarEvent(id) {
+function deleteCalendarEvent(id, mode) {
 
     let events = JSON.parse(
         localStorage.getItem("homeHubCalendar") || "[]"
@@ -1934,71 +2152,25 @@ function deleteCalendarEvent(id) {
         return;
     }
 
-    // ========================================
-    // WIEDERHOLENDER TERMIN
-    // ========================================
+// ========================================
+// LÖSCHEN
+// ========================================
 
-    if (event.repeatGroupId) {
+if (event.repeatGroupId && mode === "all") {
 
-        const choice = prompt(
-            "Dieser Termin gehört zu einer Wiederholung.\n\n" +
-            "Was möchtest du löschen?\n\n" +
-            "1 = Nur diesen Termin\n" +
-            "2 = Alle Wiederholungen\n\n" +
-            "Abbrechen = Nichts löschen"
-        );
+    // Alle Wiederholungen löschen
+    events = events.filter(function(item) {
+        return item.repeatGroupId !== event.repeatGroupId;
+    });
 
-        // Abbrechen
-        if (choice === null) {
-            return;
-        }
+} else {
 
-        // Nur diesen Termin
-        if (choice === "1") {
+    // Nur diesen Termin löschen
+    events = events.filter(function(item) {
+        return item.id !== id;
+    });
 
-            events = events.filter(function(item) {
-                return item.id !== id;
-            });
-
-        }
-
-        // Alle Wiederholungen
-        else if (choice === "2") {
-
-            events = events.filter(function(item) {
-                return item.repeatGroupId !== event.repeatGroupId;
-            });
-
-        }
-
-        // Ungültige Eingabe
-        else {
-
-            alert(                "Bitte gib nur 1 oder 2 ein."
-            );
-
-            return;
-        }
-    }
-
-    // ========================================
-    // NORMALER TERMIN
-    // ========================================
-
-    else {
-
-        const deleteOne = confirm(
-            "Möchtest du diesen Termin wirklich löschen?"
-        );
-
-        if (!deleteOne) {
-            return;
-        }
-
-        events = events.filter(function(item) {
-            return item.id !== id;
-        });
-    }
+}
 
     // ========================================
     // SPEICHERN

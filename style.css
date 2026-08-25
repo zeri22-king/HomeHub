@@ -2063,3 +2063,410 @@ body.dark-mode .calendar-week-event small {
 .homehub-reminder-close:hover {
     color: #111827;
 }
+
+/* Termin-Zusatzinfos */
+
+.event-meta {
+    display: inline-block;
+    margin-top: 4px;
+    margin-right: 6px;
+    padding: 3px 7px;
+    border-radius: 6px;
+    background: #f1f5f9;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.calendar-week-meta {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    opacity: 0.8;
+}
+
+/* ========================================
+   KALENDER TERMIN-MENÜ
+   ======================================== */
+
+.calendar-event-menu {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 9999;
+}
+
+.calendar-event-menu-box {
+    width: 320px;
+    padding: 24px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.calendar-event-menu-box strong {
+    font-size: 18px;
+    margin-bottom: 8px;
+}
+
+.calendar-event-menu-box button {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.event-menu-edit {
+    background: #eef2ff;
+    color: #3157d5;
+}
+
+.event-menu-delete {
+    background: #ffe8e8;
+    color: #d93636;
+}
+
+.event-menu-cancel {
+    background: #f1f3f5;
+    color: #555;
+}
+/* ========================================
+   KALENDER – LÖSCH-MENÜ
+   ======================================== */
+
+.calendar-delete-menu {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 10000;
+}
+
+.calendar-delete-menu-box {
+    width: min(360px, 100%);
+    padding: 24px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.calendar-delete-menu-box strong {
+    font-size: 18px;
+    margin-bottom: 8px;
+}
+
+.calendar-delete-menu-box button {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.delete-menu-one,
+.delete-menu-all {
+    background: #ffe8e8;
+    color: #d93636;
+}
+
+.delete-menu-one:hover,
+.delete-menu-all:hover {
+    background: #ffd6d6;
+}
+
+.delete-menu-cancel {
+    background: #f1f3f5;
+    color: #555;
+}
+
+.delete-menu-cancel:hover {
+    background: #e5e7eb;
+}
+
+body.dark-mode .calendar-delete-menu-box {
+    background: #1e293b;
+    color: white;
+}
+
+body.dark-mode .delete-menu-cancel {
+    background: #334155;
+    color: #e2e8f0;
+}
+
+body.dark-mode .delete-menu-one,
+body.dark-mode .delete-menu-all {
+    background: #450a0a;
+    color: #fca5a5;
+}
+
+body.dark-mode .delete-menu-one:hover,
+body.dark-mode .delete-menu-all:hover {
+    background: #5b1111;
+}
+
+/* ========================================
+   HOMEHUB – MOBILE 2.0 + ANIMATIONEN
+   ======================================== */
+
+:root {
+    --motion-fast: 0.16s;
+    --motion-normal: 0.28s;
+    --motion-slow: 0.4s;
+}
+
+/* Allgemeine, dezente Interaktionen */
+button,
+a,
+.dashboard-card,
+.today-panel,
+.form-card,
+.shopping-item,
+.task-item,
+.home-calendar-item,
+.calendar-day-card {
+    -webkit-tap-highlight-color: transparent;
+}
+
+button {
+    transition:
+        transform var(--motion-fast) ease,
+        box-shadow var(--motion-normal) ease,
+        background-color var(--motion-normal) ease,
+        border-color var(--motion-normal) ease,
+        opacity var(--motion-normal) ease;
+}
+
+button:active {
+    transform: scale(0.97);
+}
+
+.page.active {
+    animation: homeHubPageIn var(--motion-normal) ease both;
+}
+
+@keyframes homeHubPageIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.calendar-event-menu,
+.calendar-delete-menu {
+    animation: homeHubOverlayIn var(--motion-fast) ease both;
+}
+
+.calendar-event-menu-box,
+.calendar-delete-menu-box {
+    animation: homeHubPopupIn var(--motion-normal) ease both;
+}
+
+@keyframes homeHubOverlayIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes homeHubPopupIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.97);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@media (max-width: 750px) {
+
+    body {
+        display: block;
+        padding-bottom: 82px;
+        overflow-x: hidden;
+    }
+
+    /* Mobile Navigation: unten wie bei einer echten App */
+    .sidebar {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        top: auto;
+        width: 100%;
+        height: auto;
+        min-height: 68px;
+        padding: 7px 8px max(7px, env(safe-area-inset-bottom));
+        z-index: 5000;
+        border-top: 1px solid rgba(255,255,255,0.08);
+        border-bottom: 0;
+        box-shadow: 0 -8px 28px rgba(15, 23, 42, 0.18);
+        backdrop-filter: blur(14px);
+    }
+
+    .logo,
+    .sidebar-bottom {
+        display: none;
+    }
+
+    .sidebar nav {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 4px;
+        margin: 0;
+    }
+
+    .nav-button {
+        min-width: 0;
+        min-height: 58px;
+        padding: 6px 3px;
+        gap: 2px;
+        justify-content: center;
+        align-items: center;
+        border-radius: 12px;
+        font-size: 10px;
+        line-height: 1.1;
+        text-align: center;
+        transform: none;
+    }
+
+    .nav-button span {
+        font-size: 20px;
+        line-height: 1;
+    }
+
+    .nav-button:hover {
+        transform: none;
+    }
+
+    .nav-button:active {
+        transform: scale(0.94);
+    }
+
+    .active-nav {
+        box-shadow: inset 0 -3px 0 var(--primary);
+    }
+
+    main {
+        width: 100%;
+        max-width: none;
+        padding: 22px 14px 30px;
+    }
+
+    .page.active {
+        animation-duration: 0.24s;
+    }
+
+    /* Touch-freundliche Elemente */
+    input,
+    select,
+    textarea,
+    button {
+        min-height: 44px;
+    }
+
+    .nav-button {
+        min-height: 58px;
+    }
+
+    /* Karten etwas kompakter und lebendiger */
+    .dashboard-card,
+    .today-panel,
+    .form-card,
+    .shopping-item,
+    .task-item,
+    .home-calendar-item,
+    .calendar-day-card {
+        transition:
+            transform var(--motion-normal) ease,
+            box-shadow var(--motion-normal) ease,
+            background-color var(--motion-normal) ease,
+            border-color var(--motion-normal) ease;
+    }
+
+    .dashboard-card:active,
+    .shopping-item:active,
+    .task-item:active,
+    .home-calendar-item:active {
+        transform: scale(0.99);
+    }
+
+    /* Kalender-Woche auf kleinen Displays horizontal scrollbar */
+    .calendar-week-grid {
+        grid-template-columns: repeat(7, minmax(145px, 1fr));
+        overflow-x: auto;
+        padding-bottom: 8px;
+        scroll-snap-type: x proximity;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .calendar-day-card {
+        scroll-snap-align: start;
+    }
+
+    .calendar-week-header {
+        gap: 12px;
+    }
+
+    .calendar-week-actions {
+        width: 100%;
+    }
+
+    .calendar-week-actions .secondary-button {
+        flex: 1;
+        min-height: 44px;
+    }
+
+    /* Popups auf Handy fast bildschirmbreit */
+    .calendar-event-menu,
+    .calendar-delete-menu {
+        padding: 16px;
+    }
+
+    .calendar-event-menu-box,
+    .calendar-delete-menu-box {
+        width: min(420px, 100%);
+        padding: 20px;
+        border-radius: 18px;
+    }
+
+    .calendar-event-menu-box button,
+    .calendar-delete-menu-box button {
+        min-height: 48px;
+    }
+}
+
+/* Geräte mit Reduce-Motion respektieren */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
