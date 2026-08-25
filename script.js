@@ -51,7 +51,7 @@ function showPage(pageId) {
     });
 
     // Kalender und Einstellungen gehören auf dem Handy zu „Mehr“
-    if (pageId === "calendar" || pageId === "settings") {
+    if (pageId === "calendar" || pageId === "settings" || pageId === "notes") {
         const moreButton = document.getElementById("moreNavButton");
 
         if (moreButton) {
@@ -714,12 +714,15 @@ function updateHome() {
     );
 
 
-    // Offene Aufgaben
-
+    // Aufgaben, die heute fällig oder bereits überfällig sind
+    // Zukünftige Aufgaben (z. B. Samstag) werden auf Home nicht mitgezählt.
     const openTasks =
-        tasks.filter(
-            task => !task.completed
-        ).length;
+        tasks.filter(task => {
+            if (task.completed) return false;
+
+            const dueDate = parseLocalDate(task.dueDate);
+            return dueDate <= today;
+        }).length;
 
 
     // Einkauf-Zahl aktualisieren
@@ -767,6 +770,229 @@ function updateHome() {
 }
 
 
+
+
+// ================================
+// NOTIZEN
+// ================================
+
+let notes = JSON.parse(
+    localStorage.getItem("homehubNotes") || "[]"
+) || [];
+
+let editingNoteId = null;
+
+function saveNotes() {
+    localStorage.setItem(
+        "homehubNotes",
+        JSON.stringify(notes)
+    );
+}
+
+function renderNotes() {
+    const list = document.getElementById("notesList");
+    const count = document.getElementById("notesCount");
+
+    if (!list) {
+        return;
+    }
+
+    list.innerHTML = "";
+
+    if (count) {
+        count.textContent = notes.length;
+    }
+
+    if (notes.length === 0) {
+        list.innerHTML = `
+            <div class="notes-empty">
+                <div class="notes-empty-icon">📝</div>
+                <strong>Noch keine Notizen</strong>
+                <p>Erstelle deine erste Notiz oben.</p>
+            </div>
+        `;
+        return;
+    }
+
+    notes.forEach(function(note) {
+        const card = document.createElement("article");
+        card.className = "note-card";
+
+        const title = note.title || "Ohne Titel";
+        const content = note.content || "";
+
+        card.innerHTML = `
+            <div class="note-card-main">
+                <div class="note-card-icon">📝</div>
+                <div class="note-card-content">
+                    <strong>${escapeHTML(title)}</strong>
+                    <p>${escapeHTML(content).replace(/\n/g, "<br>")}</p>
+                </div>
+            </div>
+
+            <div class="note-card-actions">
+                <button class="note-action" onclick="editNote(${note.id})" title="Bearbeiten">✏️</button>
+                <button class="note-action note-delete" onclick="deleteNote(${note.id})" title="Löschen">🗑️</button>
+            </div>
+        `;
+
+        list.appendChild(card);
+    });
+}
+
+function saveNote() {
+    const titleInput = document.getElementById("noteTitle");
+    const contentInput = document.getElementById("noteContent");
+
+    if (!titleInput || !contentInput) {
+        return;
+    }
+
+    const title = titleInput.value.trim();
+    const content = contentInput.value.trim();
+
+    if (title === "" && content === "") {
+        return;
+    }
+
+    if (editingNoteId !== null) {
+        const note = notes.find(function(item) {
+            return item.id === editingNoteId;
+        });
+
+        if (note) {
+            note.title = title || "Ohne Titel";
+            note.content = content;
+        }
+
+        editingNoteId = null;
+    } else {
+        notes.unshift({
+            id: Date.now(),
+            title: title || "Ohne Titel",
+            content: content
+        });
+    }
+
+    saveNotes();
+    clearNoteForm();
+    renderNotes();
+}
+
+function editNote(id) {
+    const note = notes.find(function(item) {
+        return item.id === id;
+    });
+
+    if (!note) {
+        return;
+    }
+
+    const titleInput = document.getElementById("noteTitle");
+    const contentInput = document.getElementById("noteContent");
+    const cancelButton = document.getElementById("cancelNoteEdit");
+    const saveLabel = document.getElementById("noteSaveLabel");
+
+    if (!titleInput || !contentInput) {
+        return;
+    }
+
+    editingNoteId = id;
+    titleInput.value = note.title || "";
+    contentInput.value = note.content || "";
+
+    if (cancelButton) {
+        cancelButton.style.display = "inline-flex";
+    }
+
+    if (saveLabel) {
+        saveLabel.textContent = "Notiz speichern";
+    }
+
+    titleInput.focus();
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+}
+
+function cancelNoteEdit() {
+    editingNoteId = null;
+    clearNoteForm();
+}
+
+function clearNoteForm() {
+    const titleInput = document.getElementById("noteTitle");
+    const contentInput = document.getElementById("noteContent");
+    const cancelButton = document.getElementById("cancelNoteEdit");
+    const saveLabel = document.getElementById("noteSaveLabel");
+
+    if (titleInput) titleInput.value = "";
+    if (contentInput) contentInput.value = "";
+
+    if (cancelButton) {
+        cancelButton.style.display = "none";
+    }
+
+    if (saveLabel) {
+        saveLabel.textContent = "+ Notiz hinzufügen";
+    }
+}
+
+function deleteNote(id) {
+    const note = notes.find(function(item) {
+        return item.id === id;
+    });
+
+    if (!note) {
+        return;
+    }
+
+    const oldMenu = document.querySelector(".note-delete-menu");
+    if (oldMenu) {
+        oldMenu.remove();
+    }
+
+    const menu = document.createElement("div");
+    menu.className = "note-delete-menu";
+
+    const title = note.title || "Ohne Titel";
+
+    menu.innerHTML = `
+        <div class="note-delete-menu-box" role="dialog" aria-modal="true" aria-label="Notiz löschen">
+            <strong>Notiz löschen?</strong>
+            <p>Möchtest du „${escapeHTML(title)}“ wirklich löschen?</p>
+            <button class="note-delete-confirm">🗑️ Löschen</button>
+            <button class="note-delete-cancel">Abbrechen</button>
+        </div>
+    `;
+
+    document.body.appendChild(menu);
+
+    const closeMenu = function() {
+        menu.remove();
+    };
+
+    menu.querySelector(".note-delete-confirm").addEventListener("click", function() {
+        notes = notes.filter(function(item) {
+            return item.id !== id;
+        });
+
+        if (editingNoteId === id) {
+            editingNoteId = null;
+            clearNoteForm();
+        }
+
+        saveNotes();
+        renderNotes();
+        closeMenu();
+    });
+
+    menu.querySelector(".note-delete-cancel").addEventListener("click", closeMenu);
+
+    menu.addEventListener("click", function(event) {
+        if (event.target === menu) {
+            closeMenu();
+        }
+    });
+}
 
 // ================================
 // HEUTE-DASHBOARD
@@ -1359,6 +1585,7 @@ updateTasks();
 
 renderCalendarEvents();
 renderWeekCalendar();
+renderNotes();
 updateHome();
 
 showPage("home");

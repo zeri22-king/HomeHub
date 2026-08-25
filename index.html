@@ -58,6 +58,14 @@
 
 <button
     class="nav-button desktop-only-nav"
+    onclick="showPage('notes')"
+>
+    <span>📝</span>
+    Notizen
+</button>
+
+<button
+    class="nav-button desktop-only-nav"
     onclick="showPage('calendar')"
 >
     <span>📅</span>
@@ -89,6 +97,14 @@
                 <div>
                     <strong>Kalender</strong>
                     <small>Termine & Wochenansicht</small>
+                </div>
+            </button>
+
+            <button class="more-menu-item" onclick="showPage('notes')">
+                <span>📝</span>
+                <div>
+                    <strong>Notizen</strong>
+                    <small>Notizen speichern & verwalten</small>
                 </div>
             </button>
 
@@ -172,7 +188,52 @@
         </section>
 
 
-        <!-- =========================
+        <section id="today" class="page">
+            <header class="page-header">
+                <div>
+                    <p class="eyebrow">ÜBERSICHT</p>
+                    <h1>📋 Heute</h1>
+                    <p class="subtitle">Alles, was heute noch ansteht.</p>
+                </div>
+            </header>
+
+            <div class="today-page-progress-card">
+                <div class="today-page-progress-top">
+                    <div>
+                        <span class="card-label">Tagesfortschritt</span>
+                        <strong id="todayProgressText">0 von 0 erledigt</strong>
+                    </div>
+                    <span id="todayProgressPercent">0%</span>
+                </div>
+                <div class="today-page-progress"><div id="todayProgressBar"></div></div>
+            </div>
+
+            <div class="today-page-section">
+                <div class="section-title"><div><span class="eyebrow">KALENDER</span><h2>📅 Termine</h2></div></div>
+                <div id="todayEventsList" class="today-page-list"></div>
+            </div>
+
+            <div class="today-page-section">
+                <div class="section-title"><div><span class="eyebrow">HAUSHALT</span><h2>🧹 Aufgaben</h2></div></div>
+                <div id="todayTasksList" class="today-page-list"></div>
+            </div>
+
+            <div class="today-page-section">
+                <div class="section-title"><div><span class="eyebrow">EINKAUF</span><h2>🛒 Einkaufen</h2></div></div>
+                <div id="todayShoppingList" class="today-page-list"></div>
+            </div>
+
+            <div id="todayAllDone" class="today-all-done" style="display:none;">
+                <div class="today-all-done-icon">🎉</div>
+                <strong>Alles erledigt!</strong>
+                <p>Heute steht nichts mehr an.</p>
+            </div>
+        </section>
+
+
+        
+
+<!-- =========================
              EINKAUF
         ========================== -->
 
@@ -519,6 +580,59 @@
     </div>
 
     <ul id="calendarList"></ul>
+
+</section>
+
+<!-- ================================
+     NOTIZEN
+================================ -->
+
+<section id="notes" class="page">
+
+    <header class="page-header">
+        <div>
+            <p class="eyebrow">ORGANISATION</p>
+            <h1>📝 Notizen</h1>
+            <p class="subtitle">Halte Gedanken, Ideen und wichtige Dinge fest.</p>
+        </div>
+    </header>
+
+    <div class="form-card notes-form-card">
+        <div class="notes-form">
+            <input
+                id="noteTitle"
+                type="text"
+                placeholder="Titel"
+                maxlength="100"
+            >
+
+            <textarea
+                id="noteContent"
+                rows="5"
+                placeholder="Was möchtest du dir merken?"
+                maxlength="5000"
+            ></textarea>
+
+            <div class="notes-form-actions">
+                <button class="secondary-button" id="cancelNoteEdit" onclick="cancelNoteEdit()" style="display:none;">
+                    Abbrechen
+                </button>
+                <button class="primary-button" onclick="saveNote()">
+                    <span id="noteSaveLabel">+ Notiz hinzufügen</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="list-header">
+        <div>
+            <p class="eyebrow">DEINE NOTIZEN</p>
+            <h2>Gespeicherte Notizen</h2>
+        </div>
+        <span class="notes-count" id="notesCount">0</span>
+    </div>
+
+    <div id="notesList" class="notes-list"></div>
 
 </section>
 
