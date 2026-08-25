@@ -9,9 +9,42 @@
     <title>HomeHub</title>
 
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
 <body>
+
+<!-- LOGIN -->
+<div id="login-screen" class="login-screen">
+    <div class="login-box">
+        <div class="login-logo">
+            <img src="icon.png" alt="HomeHub">
+        </div>
+
+        <h1>HomeHub</h1>
+        <p class="login-subtitle">Melde dich an, um fortzufahren</p>
+
+        <input
+            type="email"
+            id="login-email"
+            placeholder="E-Mail-Adresse"
+            autocomplete="email"
+        >
+
+        <input
+            type="password"
+            id="login-password"
+            placeholder="Passwort"
+            autocomplete="current-password"
+        >
+
+        <button id="login-button" onclick="login()">
+            Anmelden
+        </button>
+
+        <p id="login-error" class="login-error"></p>
+    </div>
+</div>
 
     <!-- SIDEBAR -->
 

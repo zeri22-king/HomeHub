@@ -1,3 +1,89 @@
+// ===============================
+// SUPABASE
+// ===============================
+
+const SUPABASE_URL = "https://tuggjozhmqikyfkvbawn.supabase.co";
+
+// sb_publishable_luc_sCawzTFhpqo93BxKLg_z-ZTf-pm
+const SUPABASE_KEY = "sb_publishable_luc_sCawzTFhpqo93BxKLg_z-ZTf-pm";
+
+const supabaseClient = supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+);
+
+// =================================
+// AUTHENTICATION
+// =================================
+
+async function login() {
+    const email = document.getElementById("login-email").value.trim();
+    const password = document.getElementById("login-password").value;
+    const errorElement = document.getElementById("login-error");
+    const button = document.getElementById("login-button");
+
+    errorElement.textContent = "";
+
+    if (!email || !password) {
+        errorElement.textContent = "Bitte E-Mail und Passwort eingeben.";
+        return;
+    }
+
+    button.disabled = true;
+    button.textContent = "Anmelden...";
+
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+        email: email,
+        password: password
+    });
+
+    if (error) {
+    console.error("Supabase Login Fehler:", error);
+
+    errorElement.textContent = error.message;
+
+    button.disabled = false;
+    button.textContent = "Anmelden";
+    return;
+}
+
+    document.getElementById("login-screen").style.display = "none";
+
+    button.disabled = false;
+    button.textContent = "Anmelden";
+
+    console.log("Erfolgreich angemeldet:", data.user.email);
+}
+
+
+// Beim Start prüfen, ob bereits ein Benutzer angemeldet ist
+async function checkLogin() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+
+    if (session) {
+        document.getElementById("login-screen").style.display = "none";
+    } else {
+        document.getElementById("login-screen").style.display = "flex";
+    }
+}
+
+
+// Auf Änderungen der Anmeldung reagieren
+supabaseClient.auth.onAuthStateChange((event, session) => {
+    const loginScreen = document.getElementById("login-screen");
+
+    if (session) {
+        loginScreen.style.display = "none";
+    } else {
+        loginScreen.style.display = "flex";
+    }
+});
+
+
+// Login beim Laden prüfen
+checkLogin();
+
+
 let calendarWeekOffset = 0;
 
 // ================================
