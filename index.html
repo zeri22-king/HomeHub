@@ -132,211 +132,43 @@
 
         <section id="home" class="page active">
 
-            <header class="topbar">
+            <header class="home-header">
 
-                <div>
+                <div class="home-greeting">
                     <p class="eyebrow">DEIN ZUHAUSE</p>
-
                     <h1>Guten Tag 👋</h1>
-
-                    <p class="subtitle">
-                        Hier siehst du alles, was heute wichtig ist.
-                    </p>
+                    <p class="subtitle">Willkommen zurück bei HomeHub.</p>
                 </div>
 
                 <div class="top-date">
-
-                    <div id="clock">
-                        00:00:00
-                    </div>
-
+                    <div id="clock">00:00:00</div>
                     <div id="date"></div>
-
                 </div>
 
             </header>
 
+            <div class="home-widgets">
 
-            <!-- ÜBERSICHT -->
+                <button
+                    class="home-widget shopping-widget"
+                    onclick="showPage('shopping')"
+                >
+                    <span class="home-widget-icon">🛒</span>
+                    <span class="home-widget-number" id="shoppingCount">0</span>
+                    <span class="home-widget-label">offene Einkäufe</span>
+                </button>
 
-            <div class="dashboard-grid">
-
-                <div class="dashboard-card shopping-card">
-
-                    <div class="card-icon">
-                        🛒
-                    </div>
-
-                    <div class="card-info">
-
-                        <span class="card-label">
-                            Einkauf
-                        </span>
-
-                        <strong id="shoppingCount">
-                            0 offene Artikel
-                        </strong>
-
-                    </div>
-
-                    <button
-                        class="card-arrow"
-                        onclick="showPage('shopping')"
-                    >
-                        →
-                    </button>
-
-                </div>
-
-
-                <div class="dashboard-card household-card">
-
-                    <div class="card-icon">
-                        🧹
-                    </div>
-
-                    <div class="card-info">
-
-                        <span class="card-label">
-                            Haushalt
-                        </span>
-
-                        <strong id="taskCount">
-                            0 fällige Aufgaben
-                        </strong>
-
-                    </div>
-
-                    <button
-                        class="card-arrow"
-                        onclick="showPage('household')"
-                    >
-                        →
-                    </button>
-
-                </div>
-
-
-                <div class="dashboard-card progress-card">
-
-                    <div class="card-icon">
-                        📊
-                    </div>
-
-                    <div class="card-info">
-
-    <span class="card-label">
-        Tagesfortschritt
-    </span>
-
-    <strong id="progressText">
-        0 % erledigt
-    </strong>
-
-</div>
-
-<div class="mini-progress">
-    <div
-        class="mini-progress-bar"
-        id="progressBar"
-    ></div>
-</div>
-
-                </div>
+                <button
+                    class="home-widget household-widget"
+                    onclick="showPage('household')"
+                >
+                    <span class="home-widget-icon">🧹</span>
+                    <span class="home-widget-number" id="taskCount">0</span>
+                    <span class="home-widget-label">offene Aufgaben</span>
+                </button>
 
             </div>
 
-
-            <!-- HEUTE -->
-
-            <div class="section-title">
-
-                <div>
-                    <span class="eyebrow">
-                        ÜBERSICHT
-                    </span>
-
-                    <h2>Heute</h2>
-                </div>
-
-            </div>
-
-<div class="today-panel" id="todayPanel">
-
-</div>
-            
-<!-- KALENDER AUF DER STARTSEITE -->
-
-<div class="today-calendar">
-
-    <div class="section-title">
-
-        <div>
-            <span class="eyebrow">KALENDER</span>
-            <h2>Heute & kommende Termine</h2>
-        </div>
-
-        <button
-            class="secondary-button"
-            onclick="showPage('calendar')"
-        >
-            📅 Kalender öffnen
-        </button>
-
-    </div>
-
-    <div id="homeCalendarList"></div>
-
-</div>
-
-        </section>
-
-
-
-        <!-- =========================
-             HEUTE
-        ========================== -->
-
-        <section id="today" class="page">
-            <header class="page-header">
-                <div>
-                    <p class="eyebrow">ÜBERSICHT</p>
-                    <h1>📋 Heute</h1>
-                    <p class="subtitle">Alles, was heute noch ansteht.</p>
-                </div>
-            </header>
-
-            <div class="today-page-progress-card">
-                <div class="today-page-progress-top">
-                    <div>
-                        <span class="card-label">Tagesfortschritt</span>
-                        <strong id="todayProgressText">0 von 0 erledigt</strong>
-                    </div>
-                    <span id="todayProgressPercent">0%</span>
-                </div>
-                <div class="today-page-progress"><div id="todayProgressBar"></div></div>
-            </div>
-
-            <div class="today-page-section">
-                <div class="section-title"><div><span class="eyebrow">KALENDER</span><h2>📅 Termine</h2></div></div>
-                <div id="todayEventsList" class="today-page-list"></div>
-            </div>
-
-            <div class="today-page-section">
-                <div class="section-title"><div><span class="eyebrow">HAUSHALT</span><h2>🧹 Aufgaben</h2></div></div>
-                <div id="todayTasksList" class="today-page-list"></div>
-            </div>
-
-            <div class="today-page-section">
-                <div class="section-title"><div><span class="eyebrow">EINKAUF</span><h2>🛒 Einkaufen</h2></div></div>
-                <div id="todayShoppingList" class="today-page-list"></div>
-            </div>
-
-            <div id="todayAllDone" class="today-all-done" style="display:none;">
-                <div class="today-all-done-icon">🎉</div>
-                <strong>Alles erledigt!</strong>
-                <p>Heute steht nichts mehr an.</p>
-            </div>
         </section>
 
 

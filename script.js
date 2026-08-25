@@ -714,24 +714,11 @@ function updateHome() {
     );
 
 
-    // Fällige Aufgaben
+    // Offene Aufgaben
 
-    const dueTasks =
+    const openTasks =
         tasks.filter(
-            task => {
-
-                if (task.completed) {
-                    return false;
-                }
-
-
-                const date =
-                    parseLocalDate(task.dueDate);
-
-
-                return date <= today;
-
-            }
+            task => !task.completed
         ).length;
 
 
@@ -763,8 +750,7 @@ function updateHome() {
     if (taskCount) {
 
         taskCount.textContent =
-            dueTasks +
-            " fällige Aufgaben";
+            openTasks;
 
     }
 
