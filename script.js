@@ -6,12 +6,13 @@ let calendarWeekOffset = 0;
 
 function showPage(pageId) {
 
-    // Beim Seitenwechsel immer oben starten
-    window.scrollTo({
-        top: 0,
-        left: 0,
-        behavior: "smooth"
-    });
+    // Beim Seitenwechsel immer sofort oben starten.
+    // Smooth-Scrolling wurde hier bewusst entfernt, weil es auf
+    // mobilen Geräten zusammen mit dem Seitenwechsel zu Sprüngen
+    // bzw. einem kurzen "Buggen" führen kann.
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
 
     // Alle Seiten ausblenden
     const pages = document.querySelectorAll(".page");
@@ -27,6 +28,14 @@ function showPage(pageId) {
 
     if (selectedPage) {
         selectedPage.classList.add("active");
+
+        // Nach dem Aktivieren nochmals auf den Seitenanfang setzen.
+        // requestAnimationFrame wartet, bis der neue Inhalt sichtbar ist.
+        requestAnimationFrame(() => {
+            window.scrollTo(0, 0);
+            document.documentElement.scrollTop = 0;
+            document.body.scrollTop = 0;
+        });
 
         // Animation bei jedem Seitenwechsel neu starten
         selectedPage.classList.remove("page-animate");
