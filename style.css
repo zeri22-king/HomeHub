@@ -2470,3 +2470,214 @@ button:active {
         scroll-behavior: auto !important;
     }
 }
+
+
+/* =================================
+   EXTRA MOBILE ANIMATIONEN
+   ================================= */
+
+:root {
+    --motion-fast: 0.16s;
+    --motion-normal: 0.28s;
+    --motion-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Seitenwechsel */
+.page.page-animate {
+    animation: pageEnter 0.42s var(--motion-smooth) both;
+}
+
+@keyframes pageEnter {
+    0% {
+        opacity: 0;
+        transform: translateY(10px) scale(0.985);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Karten und Inhalte kommen leicht nacheinander */
+.page.page-animate .dashboard-card,
+.page.page-animate .form-card,
+.page.page-animate .today-panel,
+.page.page-animate .today-calendar,
+.page.page-animate .list-header,
+.page.page-animate > ul,
+.page.page-animate .calendar-week-section {
+    animation: contentEnter 0.42s var(--motion-smooth) both;
+}
+
+.page.page-animate .dashboard-card:nth-child(1) { animation-delay: 0.04s; }
+.page.page-animate .dashboard-card:nth-child(2) { animation-delay: 0.09s; }
+.page.page-animate .dashboard-card:nth-child(3) { animation-delay: 0.14s; }
+
+@keyframes contentEnter {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Buttons fühlen sich beim Tippen besser an */
+button {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+button:active {
+    transform: scale(0.97);
+}
+
+.card-arrow:active {
+    transform: scale(0.91);
+}
+
+.primary-button:active,
+.secondary-button:active,
+.small-action:active,
+.settings-action:active,
+.settings-danger:active {
+    transform: translateY(1px) scale(0.97);
+}
+
+/* Mobile Navigation */
+@media (max-width: 750px) {
+    .sidebar {
+        animation: navSlideUp 0.45s var(--motion-smooth) both;
+    }
+
+    @keyframes navSlideUp {
+        from {
+            opacity: 0;
+            transform: translateY(14px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .nav-button {
+        position: relative;
+        overflow: hidden;
+        transition:
+            background 0.22s ease,
+            color 0.22s ease,
+            transform 0.16s ease;
+    }
+
+    .nav-button span {
+        display: inline-block;
+        transition: transform 0.22s var(--motion-smooth);
+    }
+
+    .nav-button:active span {
+        transform: scale(0.82);
+    }
+
+    .nav-button.active-nav span {
+        animation: navIconPop 0.36s var(--motion-smooth);
+    }
+
+    @keyframes navIconPop {
+        0%   { transform: scale(0.85); }
+        55%  { transform: scale(1.16); }
+        100% { transform: scale(1); }
+    }
+
+    /* Aktiver Menüpunkt als weiche "Pille" */
+    .active-nav {
+        background: rgba(79, 124, 255, 0.13);
+        box-shadow: inset 0 -3px 0 var(--primary);
+    }
+
+    .dashboard-card,
+    .shopping-item,
+    .task-item,
+    .today-item,
+    .home-calendar-item,
+    .calendar-day-card {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .dashboard-card:active,
+    .shopping-item:active,
+    .task-item:active,
+    .home-calendar-item:active,
+    .calendar-day-card:active {
+        transform: scale(0.985);
+        box-shadow: 0 4px 16px rgba(23, 32, 51, 0.08);
+    }
+
+    /* Fortschrittsbalken etwas weicher */
+    .mini-progress-bar {
+        transition: width 0.55s var(--motion-smooth);
+    }
+
+    /* Eingabefelder */
+    .form-grid input,
+    .form-grid select {
+        transition:
+            border-color 0.2s ease,
+            box-shadow 0.2s ease,
+            transform 0.16s ease;
+    }
+
+    .form-grid input:focus,
+    .form-grid select:focus {
+        transform: translateY(-1px);
+    }
+
+    /* Popups */
+    .calendar-event-menu,
+    .calendar-delete-menu {
+        animation: popupFade 0.2s ease both;
+    }
+
+    .calendar-event-menu-box,
+    .calendar-delete-menu-box {
+        animation: popupScale 0.28s var(--motion-smooth) both;
+    }
+
+    @keyframes popupFade {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @keyframes popupScale {
+        from {
+            opacity: 0;
+            transform: translateY(10px) scale(0.96);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+}
+
+/* Animationen für Nutzer, die Bewegungen nicht mögen, deaktivieren */
+@media (prefers-reduced-motion: reduce) {
+    .page.page-animate,
+    .page.page-animate .dashboard-card,
+    .page.page-animate .form-card,
+    .page.page-animate .today-panel,
+    .page.page-animate .today-calendar,
+    .page.page-animate .list-header,
+    .page.page-animate > ul,
+    .page.page-animate .calendar-week-section,
+    .sidebar,
+    .nav-button.active-nav span,
+    .calendar-event-menu,
+    .calendar-delete-menu,
+    .calendar-event-menu-box,
+    .calendar-delete-menu-box {
+        animation: none !important;
+    }
+}

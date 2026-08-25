@@ -20,6 +20,11 @@ function showPage(pageId) {
 
     if (selectedPage) {
         selectedPage.classList.add("active");
+
+        // Animation bei jedem Seitenwechsel neu starten
+        selectedPage.classList.remove("page-animate");
+        void selectedPage.offsetWidth;
+        selectedPage.classList.add("page-animate");
     }
 
 
@@ -47,6 +52,13 @@ function showPage(pageId) {
 
     });
 
+
+    // Animation-Klasse nach der Animation wieder entfernen
+    if (selectedPage) {
+        setTimeout(() => {
+            selectedPage.classList.remove("page-animate");
+        }, 650);
+    }
 
     // Dashboard aktualisieren
 updateHome();
