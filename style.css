@@ -217,32 +217,22 @@ main {
 
 .page {
     display: none;
-
-    animation: pageIn 0.25s ease;
 }
 
 .page.active {
     display: block;
+    animation: pageFadeIn 0.18s ease-out;
 }
 
-@keyframes pageIn {
-
+@keyframes pageFadeIn {
     from {
         opacity: 0;
-
-        transform:
-            translateY(8px);
     }
 
     to {
         opacity: 1;
-
-        transform:
-            translateY(0);
     }
-
 }
-
 
 /* ================================
    ÜBERSCHRIFTEN

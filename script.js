@@ -6,13 +6,12 @@ let calendarWeekOffset = 0;
 
 function showPage(pageId) {
 
-    // Beim Seitenwechsel immer sofort oben starten.
-    // Smooth-Scrolling wurde hier bewusst entfernt, weil es auf
-    // mobilen Geräten zusammen mit dem Seitenwechsel zu Sprüngen
-    // bzw. einem kurzen "Buggen" führen kann.
-    window.scrollTo(0, 0);
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
+    // Scrollposition sofort zurücksetzen
+    window.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: "instant"
+    });
 
     // Alle Seiten ausblenden
     const pages = document.querySelectorAll(".page");
@@ -21,43 +20,24 @@ function showPage(pageId) {
         page.classList.remove("active");
     });
 
-
     // Gewählte Seite anzeigen
-    const selectedPage =
-        document.getElementById(pageId);
+    const selectedPage = document.getElementById(pageId);
 
     if (selectedPage) {
         selectedPage.classList.add("active");
-
-        // Nach dem Aktivieren nochmals auf den Seitenanfang setzen.
-        // requestAnimationFrame wartet, bis der neue Inhalt sichtbar ist.
-        requestAnimationFrame(() => {
-            window.scrollTo(0, 0);
-            document.documentElement.scrollTop = 0;
-            document.body.scrollTop = 0;
-        });
-
-        // Animation bei jedem Seitenwechsel neu starten
-        selectedPage.classList.remove("page-animate");
-        void selectedPage.offsetWidth;
-        selectedPage.classList.add("page-animate");
     }
 
-
-    // Alle Sidebar-Buttons deaktivieren
-    const navButtons =
-        document.querySelectorAll(".nav-button");
+    // Alle Navigations-Buttons deaktivieren
+    const navButtons = document.querySelectorAll(".nav-button");
 
     navButtons.forEach(button => {
         button.classList.remove("active-nav");
     });
 
-
-    // Passenden Sidebar-Button aktivieren
+    // Passenden Navigations-Button aktivieren
     navButtons.forEach(button => {
 
-        const action =
-            button.getAttribute("onclick");
+        const action = button.getAttribute("onclick");
 
         if (
             action &&
@@ -65,28 +45,11 @@ function showPage(pageId) {
         ) {
             button.classList.add("active-nav");
         }
-
     });
 
-
-    // Animation-Klasse nach der Animation wieder entfernen
-    if (selectedPage) {
-        setTimeout(() => {
-            selectedPage.classList.remove("page-animate");
-        }, 650);
-    }
-
     // Dashboard aktualisieren
-updateHome();
-
-// Kalender aktualisieren
-if (pageId === "calendar") {
-    renderCalendarEvents();
-    renderWeekCalendar();
+    updateHome();
 }
-
-}
-
 
 
 // ================================
