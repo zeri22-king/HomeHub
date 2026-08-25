@@ -13,6 +13,9 @@ function showPage(pageId) {
         behavior: "instant"
     });
 
+    // Mehr-Menü schließen, sobald eine Seite geöffnet wird
+    closeMoreMenu();
+
     // Alle Seiten ausblenden
     const pages = document.querySelectorAll(".page");
 
@@ -34,7 +37,7 @@ function showPage(pageId) {
         button.classList.remove("active-nav");
     });
 
-    // Passenden Navigations-Button aktivieren
+    // Passenden Haupt-Navigationsbutton aktivieren
     navButtons.forEach(button => {
 
         const action = button.getAttribute("onclick");
@@ -47,9 +50,67 @@ function showPage(pageId) {
         }
     });
 
+    // Kalender und Einstellungen gehören auf dem Handy zu „Mehr“
+    if (pageId === "calendar" || pageId === "settings") {
+        const moreButton = document.getElementById("moreNavButton");
+
+        if (moreButton) {
+            moreButton.classList.add("active-nav");
+        }
+    }
+
     // Dashboard aktualisieren
     updateHome();
 }
+
+
+function toggleMoreMenu() {
+
+    const menu = document.getElementById("moreMenu");
+    const button = document.getElementById("moreNavButton");
+
+    if (!menu || !button) {
+        return;
+    }
+
+    const isOpen = menu.classList.toggle("open");
+
+    button.classList.toggle("menu-open", isOpen);
+}
+
+
+function closeMoreMenu() {
+
+    const menu = document.getElementById("moreMenu");
+    const button = document.getElementById("moreNavButton");
+
+    if (menu) {
+        menu.classList.remove("open");
+    }
+
+    if (button) {
+        button.classList.remove("menu-open");
+    }
+}
+
+
+document.addEventListener("click", function(event) {
+
+    const menu = document.getElementById("moreMenu");
+    const button = document.getElementById("moreNavButton");
+
+    if (!menu || !button) {
+        return;
+    }
+
+    if (
+        menu.classList.contains("open") &&
+        !menu.contains(event.target) &&
+        !button.contains(event.target)
+    ) {
+        closeMoreMenu();
+    }
+});
 
 
 // ================================

@@ -2804,3 +2804,133 @@ button:active {
     .today-page-content p, .today-empty-item p { font-size: 11px; }
     .today-page-progress-top > span { font-size: 16px; }
 }
+
+/* ================================
+   MOBILE: MEHR-MENÜ
+================================ */
+
+.more-nav-button,
+.more-menu {
+    display: none;
+}
+
+.more-nav-button.menu-open {
+    background: rgba(79, 124, 255, 0.18);
+}
+
+@media (max-width: 750px) {
+
+    .sidebar nav {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+
+    .desktop-only-nav {
+        display: none !important;
+    }
+
+    .more-nav-button {
+        display: flex;
+    }
+
+    .more-menu {
+        position: fixed;
+        right: 10px;
+        bottom: calc(76px + env(safe-area-inset-bottom));
+        width: min(270px, calc(100vw - 20px));
+        padding: 8px;
+        display: none;
+        flex-direction: column;
+        gap: 6px;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        box-shadow: 0 14px 40px rgba(15, 23, 42, 0.22);
+        z-index: 6000;
+        transform-origin: bottom right;
+    }
+
+    .more-menu.open {
+        display: flex;
+        animation: moreMenuIn 0.2s ease-out both;
+    }
+
+    .more-menu-item {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
+        border: 0;
+        border-radius: 12px;
+        background: transparent;
+        color: var(--text);
+        text-align: left;
+        cursor: pointer;
+        transition: background 0.18s ease, transform 0.15s ease;
+    }
+
+    .more-menu-item:hover {
+        background: var(--background);
+    }
+
+    .more-menu-item:active {
+        transform: scale(0.97);
+    }
+
+    .more-menu-item > span {
+        width: 40px;
+        height: 40px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 11px;
+        background: #eef2ff;
+        font-size: 20px;
+    }
+
+    .more-menu-item div {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+    }
+
+    .more-menu-item strong {
+        font-size: 14px;
+    }
+
+    .more-menu-item small {
+        color: var(--muted);
+        font-size: 11px;
+    }
+
+    body.dark-mode .more-menu {
+        background: var(--card);
+        border-color: var(--border);
+    }
+
+    body.dark-mode .more-menu-item:hover {
+        background: #1b2537;
+    }
+
+    body.dark-mode .more-menu-item > span {
+        background: #202b42;
+    }
+
+    @keyframes moreMenuIn {
+        from {
+            opacity: 0;
+            transform: translateY(8px) scale(0.96);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .more-menu.open {
+        animation: none !important;
+    }
+}

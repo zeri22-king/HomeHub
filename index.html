@@ -57,7 +57,7 @@
             </button>
 
 <button
-    class="nav-button"
+    class="nav-button desktop-only-nav"
     onclick="showPage('calendar')"
 >
     <span>📅</span>
@@ -65,14 +65,42 @@
 </button>
 
 <button
-    class="nav-button"
+    class="nav-button desktop-only-nav"
     onclick="showPage('settings')"
 >
     <span>⚙️</span>
     Einstellungen
 </button>
 
+<button
+    class="nav-button more-nav-button"
+    id="moreNavButton"
+    onclick="toggleMoreMenu()"
+>
+    <span>⋯</span>
+    Mehr
+</button>
+
         </nav>
+
+        <div class="more-menu" id="moreMenu">
+            <button class="more-menu-item" onclick="showPage('calendar')">
+                <span>📆</span>
+                <div>
+                    <strong>Kalender</strong>
+                    <small>Termine & Wochenansicht</small>
+                </div>
+            </button>
+
+            <button class="more-menu-item" onclick="showPage('settings')">
+                <span>⚙️</span>
+                <div>
+                    <strong>Einstellungen</strong>
+                    <small>HomeHub anpassen</small>
+                </div>
+            </button>
+        </div>
+
         <div class="sidebar-bottom">
 
 <button
