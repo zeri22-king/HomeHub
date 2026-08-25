@@ -6,6 +6,13 @@ let calendarWeekOffset = 0;
 
 function showPage(pageId) {
 
+    // Beim Seitenwechsel immer oben starten
+    window.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: "smooth"
+    });
+
     // Alle Seiten ausblenden
     const pages = document.querySelectorAll(".page");
 
