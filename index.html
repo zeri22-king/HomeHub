@@ -42,7 +42,16 @@
             Anmelden
         </button>
 
+        <button id="signup-button" class="login-secondary-button" onclick="signup()">
+            Konto erstellen
+        </button>
+
+        <button class="login-link-button" onclick="resetPassword()">
+            Passwort vergessen?
+        </button>
+
         <p id="login-error" class="login-error"></p>
+        <p id="login-message" class="login-message"></p>
     </div>
 </div>
 
@@ -163,7 +172,7 @@
 
             <div class="offline-status">
                 <span class="status-dot"></span>
-                Lokal gespeichert
+                <span id="cloud-status-text">Nicht angemeldet</span>
             </div>
         </div>
 
@@ -872,6 +881,39 @@
 
     </div>
 
+
+
+    <!-- KONTO -->
+
+    <div class="settings-section">
+
+        <h2>
+            👤 Konto
+        </h2>
+
+        <div class="settings-card">
+            <div class="settings-info">
+                <strong id="account-email">Angemeldet</strong>
+                <span>Dein HomeHub-Konto und deine Cloud-Daten.</span>
+            </div>
+
+            <button class="settings-action" onclick="logout()">
+                Abmelden
+            </button>
+        </div>
+
+        <div class="settings-card danger-card">
+            <div class="settings-info">
+                <strong>Konto endgültig löschen</strong>
+                <span>Löscht dein Konto und alle zugehörigen HomeHub-Daten aus Supabase.</span>
+            </div>
+
+            <button class="settings-danger" onclick="deleteAccount()">
+                Konto löschen
+            </button>
+        </div>
+
+    </div>
 
 
     <!-- ÜBER -->

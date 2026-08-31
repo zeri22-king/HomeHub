@@ -12,77 +12,384 @@ const supabaseClient = supabase.createClient(
     SUPABASE_KEY
 );
 
+
+// =================================
+// CLOUD-SPEICHERUNG (SUPABASE)
+// =================================
+// Supabase ist die dauerhafte Datenquelle.
+// localStorage wird nur als lokaler Cache verwendet.
+
+let cloudLoaded = false;
+let cloudLoadPromise = null;
+let cloudSaveQueue = Promise.resolve();
+let cloudChannel = null;
+
+const HOMEHUB_DATA_KEYS = [
+    "homehubShopping",
+    "homehubTasks",
+    "homehubNotes",
+    "homeHubCalendar",
+    "homehubDarkMode"
+];
+
+function getHomeHubCloudData() {
+    const result = {};
+    HOMEHUB_DATA_KEYS.forEach(function(key) {
+        const value = localStorage.getItem(key);
+        if (value !== null) result[key] = value;
+    });
+    return result;
+}
+
+function applyHomeHubCloudData(data) {
+    if (!data || typeof data !== "object") return;
+    HOMEHUB_DATA_KEYS.forEach(function(key) {
+        if (Object.prototype.hasOwnProperty.call(data, key)) {
+            localStorage.setItem(key, data[key]);
+        }
+    });
+}
+
+function clearHomeHubCache() {
+    HOMEHUB_DATA_KEYS.forEach(function(key) {
+        localStorage.removeItem(key);
+    });
+}
+
+function setCloudStatus(textValue, online) {
+    const el = document.getElementById("cloud-status-text");
+    if (el) el.textContent = textValue;
+    const dot = document.querySelector(".offline-status .status-dot");
+    if (dot) dot.style.background = online ? "#22c55e" : "#f59e0b";
+}
+
+function refreshHomeHubUI() {
+    try {
+        shoppingItems = JSON.parse(localStorage.getItem("homehubShopping") || "[]") || [];
+        tasks = JSON.parse(localStorage.getItem("homehubTasks") || "[]") || [];
+        notes = JSON.parse(localStorage.getItem("homehubNotes") || "[]") || [];
+        updateShoppingList();
+        updateTasks();
+        renderNotes();
+        renderCalendarEvents();
+        renderHomeCalendar();
+        renderWeekCalendar();
+        updateHome();
+        loadTheme();
+        checkCalendarReminders();
+    } catch (error) {
+        console.error("HomeHub Oberfläche konnte nicht aktualisiert werden:", error);
+    }
+}
+
+function subscribeToCloud(userId) {
+    if (cloudChannel) {
+        supabaseClient.removeChannel(cloudChannel);
+        cloudChannel = null;
+    }
+
+    cloudChannel = supabaseClient
+        .channel("homehub-data-" + userId)
+        .on(
+            "postgres_changes",
+            {
+                event: "*",
+                schema: "public",
+                table: "homehub_data",
+                filter: "user_id=eq." + userId
+            },
+            function(payload) {
+                if (payload.eventType === "DELETE") {
+                    clearHomeHubCache();
+                    cloudLoaded = false;
+                    refreshHomeHubUI();
+                    return;
+                }
+                if (payload.new && payload.new.data) {
+                    applyHomeHubCloudData(payload.new.data);
+                    refreshHomeHubUI();
+                    setCloudStatus("Mit Supabase synchronisiert", true);
+                }
+            }
+        )
+        .subscribe();
+}
+
+async function loadCloudData() {
+    if (cloudLoaded) return true;
+    if (cloudLoadPromise) return cloudLoadPromise;
+
+    cloudLoadPromise = (async function() {
+        const { data: sessionData, error: sessionError } =
+            await supabaseClient.auth.getSession();
+
+        if (sessionError || !sessionData.session) return false;
+
+        const userId = sessionData.session.user.id;
+        const { data: rows, error } = await supabaseClient
+            .from("homehub_data")
+            .select("id, data, updated_at")
+            .eq("user_id", userId)
+            .limit(1);
+
+        if (error) {
+            console.error("HomeHub Cloud laden fehlgeschlagen:", error);
+            setCloudStatus("Cloud-Fehler", false);
+            return false;
+        }
+
+        const cloudRow = rows && rows.length ? rows[0] : null;
+
+        if (cloudRow && cloudRow.data) {
+            // Cloud gewinnt beim Login: dadurch werden Daten vom Handy/PC nicht überschrieben.
+            applyHomeHubCloudData(cloudRow.data);
+            console.log("HomeHub-Daten aus Supabase geladen.");
+        } else {
+            // Erstes Gerät dieses Kontos: vorhandene lokale Daten einmalig übernehmen.
+            const localData = getHomeHubCloudData();
+            if (Object.keys(localData).length) {
+                const { error: insertError } = await supabaseClient
+                    .from("homehub_data")
+                    .upsert(
+                        { user_id: userId, data: localData, updated_at: new Date().toISOString() },
+                        { onConflict: "user_id" }
+                    );
+                if (insertError) {
+                    console.error("Lokale HomeHub-Daten konnten nicht übernommen werden:", insertError);
+                    setCloudStatus("Cloud-Fehler", false);
+                    return false;
+                }
+            }
+        }
+
+        cloudLoaded = true;
+        subscribeToCloud(userId);
+        refreshHomeHubUI();
+        setCloudStatus("Mit Supabase synchronisiert", true);
+        return true;
+    })();
+
+    try {
+        return await cloudLoadPromise;
+    } finally {
+        cloudLoadPromise = null;
+    }
+}
+
+function queueCloudSave() {
+    cloudSaveQueue = cloudSaveQueue
+        .catch(function() {})
+        .then(async function() {
+            if (!cloudLoaded) return;
+
+            const { data: sessionData } = await supabaseClient.auth.getSession();
+            const session = sessionData && sessionData.session;
+            if (!session) return;
+
+            const { error } = await supabaseClient
+                .from("homehub_data")
+                .upsert(
+                    {
+                        user_id: session.user.id,
+                        data: getHomeHubCloudData(),
+                        updated_at: new Date().toISOString()
+                    },
+                    { onConflict: "user_id" }
+                );
+
+            if (error) throw error;
+            setCloudStatus("Mit Supabase synchronisiert", true);
+        })
+        .catch(function(error) {
+            console.error("HomeHub Cloud-Speicherung fehlgeschlagen:", error);
+            setCloudStatus("Cloud-Speicherung fehlgeschlagen", false);
+        });
+
+    return cloudSaveQueue;
+}
+
 // =================================
 // AUTHENTICATION
 // =================================
 
-async function login() {
-    const email = document.getElementById("login-email").value.trim();
-    const password = document.getElementById("login-password").value;
-    const errorElement = document.getElementById("login-error");
-    const button = document.getElementById("login-button");
+function getAuthElements() {
+    return {
+        email: document.getElementById("login-email"),
+        password: document.getElementById("login-password"),
+        error: document.getElementById("login-error"),
+        message: document.getElementById("login-message"),
+        loginButton: document.getElementById("login-button"),
+        signupButton: document.getElementById("signup-button")
+    };
+}
 
-    errorElement.textContent = "";
+function showAuthMessage(errorText, successText) {
+    const el = getAuthElements();
+    if (el.error) el.error.textContent = errorText || "";
+    if (el.message) el.message.textContent = successText || "";
+}
+
+function updateAccountUI(session) {
+    const emailEl = document.getElementById("account-email");
+    if (emailEl) {
+        emailEl.textContent = session && session.user && session.user.email
+            ? session.user.email
+            : "Nicht angemeldet";
+    }
+}
+
+async function login() {
+    const el = getAuthElements();
+    const email = el.email.value.trim();
+    const password = el.password.value;
+    showAuthMessage("", "");
 
     if (!email || !password) {
-        errorElement.textContent = "Bitte E-Mail und Passwort eingeben.";
+        showAuthMessage("Bitte E-Mail und Passwort eingeben.", "");
         return;
     }
 
-    button.disabled = true;
-    button.textContent = "Anmelden...";
+    el.loginButton.disabled = true;
+    if (el.signupButton) el.signupButton.disabled = true;
+    el.loginButton.textContent = "Anmelden...";
 
-    const { data, error } = await supabaseClient.auth.signInWithPassword({
-        email: email,
-        password: password
-    });
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+    el.loginButton.disabled = false;
+    if (el.signupButton) el.signupButton.disabled = false;
+    el.loginButton.textContent = "Anmelden";
 
     if (error) {
-    console.error("Supabase Login Fehler:", error);
-
-    errorElement.textContent = error.message;
-
-    button.disabled = false;
-    button.textContent = "Anmelden";
-    return;
-}
+        console.error("Supabase Login Fehler:", error);
+        showAuthMessage(error.message, "");
+        return;
+    }
 
     document.getElementById("login-screen").style.display = "none";
-
-    button.disabled = false;
-    button.textContent = "Anmelden";
-
+    updateAccountUI(data.session);
     console.log("Erfolgreich angemeldet:", data.user.email);
+    await loadCloudData();
 }
 
+async function signup() {
+    const el = getAuthElements();
+    const email = el.email.value.trim();
+    const password = el.password.value;
+    showAuthMessage("", "");
 
-// Beim Start prüfen, ob bereits ein Benutzer angemeldet ist
-async function checkLogin() {
-    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!email || !password) {
+        showAuthMessage("Bitte E-Mail und Passwort eingeben.", "");
+        return;
+    }
+    if (password.length < 6) {
+        showAuthMessage("Das Passwort muss mindestens 6 Zeichen haben.", "");
+        return;
+    }
 
-    if (session) {
+    el.loginButton.disabled = true;
+    if (el.signupButton) el.signupButton.disabled = true;
+    if (el.signupButton) el.signupButton.textContent = "Konto wird erstellt...";
+
+    const { data, error } = await supabaseClient.auth.signUp({
+        email,
+        password,
+        options: { emailRedirectTo: window.location.origin + window.location.pathname }
+    });
+
+    el.loginButton.disabled = false;
+    if (el.signupButton) el.signupButton.disabled = false;
+    if (el.signupButton) el.signupButton.textContent = "Konto erstellen";
+
+    if (error) {
+        console.error("Supabase Registrierung Fehler:", error);
+        showAuthMessage(error.message, "");
+        return;
+    }
+
+    if (data.session) {
         document.getElementById("login-screen").style.display = "none";
+        updateAccountUI(data.session);
+        await loadCloudData();
     } else {
-        document.getElementById("login-screen").style.display = "flex";
+        showAuthMessage("", "Konto erstellt. Bitte bestätige deine E-Mail-Adresse und melde dich danach an.");
     }
 }
 
+async function resetPassword() {
+    const el = getAuthElements();
+    const email = el.email.value.trim();
+    showAuthMessage("", "");
+    if (!email) {
+        showAuthMessage("Bitte zuerst deine E-Mail-Adresse eingeben.", "");
+        return;
+    }
 
-// Auf Änderungen der Anmeldung reagieren
-supabaseClient.auth.onAuthStateChange((event, session) => {
+    const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + window.location.pathname
+    });
+    if (error) {
+        showAuthMessage(error.message, "");
+    } else {
+        showAuthMessage("", "Eine E-Mail zum Zurücksetzen des Passworts wurde gesendet.");
+    }
+}
+
+async function logout() {
+    await supabaseClient.auth.signOut();
+}
+
+async function deleteAccount() {
+    const confirmed = confirm(
+        "Möchtest du dein HomeHub-Konto wirklich endgültig löschen? Deine Cloud-Daten und dein Benutzerkonto werden dabei gelöscht."
+    );
+    if (!confirmed) return;
+
+    const { error } = await supabaseClient.rpc("delete_my_account");
+    if (error) {
+        console.error("Konto konnte nicht gelöscht werden:", error);
+        alert("Das Konto konnte nicht gelöscht werden. Bitte führe zuerst die SQL-Datei aus, die im ZIP enthalten ist.");
+        return;
+    }
+
+    await supabaseClient.auth.signOut();
+    clearHomeHubCache();
+    alert("Dein HomeHub-Konto wurde gelöscht.");
+    location.reload();
+}
+
+async function checkLogin() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
     const loginScreen = document.getElementById("login-screen");
 
     if (session) {
         loginScreen.style.display = "none";
+        updateAccountUI(session);
+        await loadCloudData();
     } else {
         loginScreen.style.display = "flex";
+        cloudLoaded = false;
+        setCloudStatus("Nicht angemeldet", false);
+    }
+}
+
+supabaseClient.auth.onAuthStateChange(function(event, session) {
+    const loginScreen = document.getElementById("login-screen");
+    if (session) {
+        loginScreen.style.display = "none";
+        updateAccountUI(session);
+        setTimeout(function() { loadCloudData(); }, 0);
+    } else {
+        loginScreen.style.display = "flex";
+        cloudLoaded = false;
+        if (cloudChannel) {
+            supabaseClient.removeChannel(cloudChannel);
+            cloudChannel = null;
+        }
+        clearHomeHubCache();
+        refreshHomeHubUI();
+        setCloudStatus("Nicht angemeldet", false);
     }
 });
-
-
-// Login beim Laden prüfen
-checkLogin();
-
 
 let calendarWeekOffset = 0;
 
@@ -255,12 +562,12 @@ let shoppingItems =
 
 
 function saveShopping() {
-
     localStorage.setItem(
         "homehubShopping",
         JSON.stringify(shoppingItems)
     );
 
+    queueCloudSave();
 }
 
 
@@ -469,12 +776,12 @@ let tasks =
 // Aufgaben speichern
 
 function saveTasks() {
-
     localStorage.setItem(
         "homehubTasks",
         JSON.stringify(tasks)
     );
 
+    queueCloudSave();
 }
 
 
@@ -873,6 +1180,8 @@ function saveNotes() {
         "homehubNotes",
         JSON.stringify(notes)
     );
+
+    queueCloudSave();
 }
 
 function renderNotes() {
@@ -1698,6 +2007,7 @@ function toggleTheme() {
         darkMode
     );
 
+    queueCloudSave();
 
     updateThemeButton();
 }
@@ -1767,24 +2077,39 @@ function loadTheme() {
 
 loadTheme();
 
+// Jetzt, nachdem alle HomeHub-Datenstrukturen definiert sind, Cloud-Login prüfen.
+checkLogin();
+
 // =================================
 // EINSTELLUNGEN
 // =================================
 
-function clearHomeHubData() {
+async function clearHomeHubData() {
     const confirmDelete = confirm(
-        "Möchtest du wirklich alle HomeHub-Daten löschen?"
+        "Möchtest du wirklich alle HomeHub-Daten löschen? Diese Daten werden auch aus Supabase entfernt."
     );
 
-    if (!confirmDelete) {
-        return;
+    if (!confirmDelete) return;
+
+    const { data: sessionData } = await supabaseClient.auth.getSession();
+    const session = sessionData && sessionData.session;
+
+    if (session) {
+        const { error } = await supabaseClient
+            .from("homehub_data")
+            .delete()
+            .eq("user_id", session.user.id);
+
+        if (error) {
+            console.error("Cloud-Daten konnten nicht gelöscht werden:", error);
+            alert("Die Cloud-Daten konnten nicht gelöscht werden.");
+            return;
+        }
     }
 
-    localStorage.clear();
-
+    clearHomeHubCache();
+    refreshHomeHubUI();
     alert("Alle HomeHub-Daten wurden gelöscht.");
-
-    location.reload();
 }
 
 // =================================
@@ -1836,7 +2161,7 @@ function importHomeHubData(event) {
 
     const reader = new FileReader();
 
-    reader.onload = function(e) {
+    reader.onload = async function(e) {
 
         try {
 
@@ -1844,20 +2169,18 @@ function importHomeHubData(event) {
 
             localStorage.clear();
 
+            clearHomeHubCache();
+
             Object.keys(data).forEach(function(key) {
-
-                localStorage.setItem(
-                    key,
-                    data[key]
-                );
-
+                localStorage.setItem(key, data[key]);
             });
 
-            alert(
-                "HomeHub wurde erfolgreich wiederhergestellt."
-            );
+            await queueCloudSave();
+            refreshHomeHubUI();
 
-            location.reload();
+            alert(
+                "HomeHub wurde erfolgreich wiederhergestellt und in Supabase gespeichert."
+            );
 
         } catch (error) {
 
@@ -2102,6 +2425,8 @@ if (window.editingCalendarEventId) {
         "homeHubCalendar",
         JSON.stringify(events)
     );
+
+    queueCloudSave();
 
     // ========================================
     // EINGABEFELDER LEEREN
@@ -2703,6 +3028,8 @@ if (event.repeatGroupId && mode === "all") {
         "homeHubCalendar",
         JSON.stringify(events)
     );
+
+    queueCloudSave();
 
     // ========================================
     // ALLES AKTUALISIEREN
