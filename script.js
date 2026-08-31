@@ -1,3 +1,93 @@
+
+// =================================
+// HOMeHUB DIALOGE
+// Ersetzt Browser-alert/confirm/prompt durch eigene HomeHub-Popups.
+// =================================
+let homeHubDialogResolver = null;
+let homeHubDialogMode = null;
+
+function closeHomeHubDialog(result) {
+    const modal = document.getElementById("homehub-modal");
+    const input = document.getElementById("homehub-modal-input");
+    if (modal) {
+        modal.classList.remove("open");
+        modal.setAttribute("aria-hidden", "true");
+    }
+    if (homeHubDialogResolver) {
+        const resolve = homeHubDialogResolver;
+        homeHubDialogResolver = null;
+        homeHubDialogMode = null;
+        resolve(result);
+    }
+    if (input) input.value = "";
+}
+
+function openHomeHubDialog({ title = "HomeHub", message = "", type = "alert", defaultValue = "", placeholder = "" }) {
+    return new Promise((resolve) => {
+        const modal = document.getElementById("homehub-modal");
+        const titleEl = document.getElementById("homehub-modal-title");
+        const messageEl = document.getElementById("homehub-modal-message");
+        const input = document.getElementById("homehub-modal-input");
+        const ok = document.getElementById("homehub-modal-ok");
+        const cancel = document.getElementById("homehub-modal-cancel");
+        const icon = document.getElementById("homehub-modal-icon");
+        if (!modal || !titleEl || !messageEl || !input || !ok || !cancel || !icon) {
+            resolve(type === "confirm" ? false : type === "prompt" ? null : undefined);
+            return;
+        }
+
+        homeHubDialogResolver = resolve;
+        homeHubDialogMode = type;
+        titleEl.textContent = title;
+        messageEl.textContent = message;
+        input.style.display = type === "prompt" ? "block" : "none";
+        input.value = type === "prompt" ? defaultValue : "";
+        input.placeholder = placeholder;
+        cancel.style.display = type === "alert" ? "none" : "inline-block";
+        ok.textContent = type === "confirm" ? "Bestätigen" : type === "prompt" ? "Weiter" : "OK";
+        icon.textContent = type === "confirm" ? "❓" : type === "prompt" ? "✏️" : "🏠";
+
+        modal.classList.add("open");
+        modal.setAttribute("aria-hidden", "false");
+        setTimeout(() => type === "prompt" ? input.focus() : ok.focus(), 20);
+    });
+}
+
+function showHomeHubAlert(message, title = "HomeHub") {
+    return openHomeHubDialog({ title, message, type: "alert" });
+}
+
+function showHomeHubConfirm(message, title = "HomeHub") {
+    return openHomeHubDialog({ title, message, type: "confirm" });
+}
+
+function showHomeHubPrompt(message, defaultValue = "", title = "HomeHub", placeholder = "") {
+    return openHomeHubDialog({ title, message, type: "prompt", defaultValue, placeholder });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const ok = document.getElementById("homehub-modal-ok");
+    const cancel = document.getElementById("homehub-modal-cancel");
+    const input = document.getElementById("homehub-modal-input");
+    const backdrop = document.querySelector("[data-modal-close]");
+
+    if (ok) ok.addEventListener("click", () => {
+        const result = homeHubDialogMode === "prompt" ? input.value : true;
+        closeHomeHubDialog(result);
+    });
+    if (cancel) cancel.addEventListener("click", () => closeHomeHubDialog(homeHubDialogMode === "prompt" ? null : false));
+    if (backdrop) backdrop.addEventListener("click", () => closeHomeHubDialog(homeHubDialogMode === "prompt" ? null : false));
+    if (input) input.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") { event.preventDefault(); ok.click(); }
+        if (event.key === "Escape") { event.preventDefault(); cancel.click(); }
+    });
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && document.getElementById("homehub-modal")?.classList.contains("open")) {
+            closeHomeHubDialog(homeHubDialogMode === "prompt" ? null : false);
+        }
+    });
+});
+
 // ===============================
 // SUPABASE
 // ===============================
@@ -113,7 +203,7 @@ function updateHouseholdUI() {
 }
 
 async function createHousehold() {
-    const name = prompt("Wie soll dein Haushalt heißen?", "Mein Haushalt");
+    const name = await showHomeHubPrompt("Wie soll dein Haushalt heißen?", "Mein Haushalt");
     if (!name || !name.trim()) return;
 
     const { data, error } = await supabaseClient.rpc("create_household", {
@@ -121,7 +211,7 @@ async function createHousehold() {
     });
     if (error) {
         console.error(error);
-        alert("Der Haushalt konnte nicht erstellt werden: " + error.message);
+        await showHomeHubAlert("Der Haushalt konnte nicht erstellt werden: " + error.message);
         return;
     }
 
@@ -129,11 +219,11 @@ async function createHousehold() {
     currentMembership = data.membership;
     updateHouseholdUI();
     await loadCloudData(true);
-    alert("Haushalt erstellt! Dein Beitrittscode ist: " + currentHousehold.join_code);
+    await showHomeHubAlert("Haushalt erstellt! Dein Beitrittscode ist: " + currentHousehold.join_code);
 }
 
 async function joinHousehold() {
-    const code = prompt("Gib den 8-stelligen Beitrittscode des Haushalts ein:");
+    const code = await showHomeHubPrompt("Gib den 8-stelligen Beitrittscode des Haushalts ein:", "", "Haushalt beitreten", "8-stelliger Code");
     if (!code || !code.trim()) return;
 
     const { data, error } = await supabaseClient.rpc("join_household", {
@@ -141,7 +231,7 @@ async function joinHousehold() {
     });
     if (error) {
         console.error(error);
-        alert("Beitritt fehlgeschlagen: " + error.message);
+        await showHomeHubAlert("Beitritt fehlgeschlagen: " + error.message);
         return;
     }
 
@@ -151,20 +241,20 @@ async function joinHousehold() {
     clearHomeHubCache();
     cloudLoaded = false;
     await loadCloudData(true);
-    alert("Du bist jetzt Mitglied von „" + currentHousehold.name + "“.");
+    await showHomeHubAlert("Du bist jetzt Mitglied von „" + currentHousehold.name + "“. ");
 }
 
 async function leaveHousehold() {
     if (!currentHousehold) return;
     if (currentMembership && currentMembership.role === "owner") {
-        alert("Als Besitzer kannst du den Haushalt nicht verlassen. Übertrage zuerst den Besitz oder lösche den Haushalt.");
+        await showHomeHubAlert("Als Besitzer kannst du den Haushalt nicht verlassen. Übertrage zuerst den Besitz oder lösche den Haushalt.");
         return;
     }
-    if (!confirm("Möchtest du diesen Haushalt wirklich verlassen?")) return;
+    if (!(await showHomeHubConfirm("Möchtest du diesen Haushalt wirklich verlassen?", "Haushalt verlassen"))) return;
 
     const { error } = await supabaseClient.rpc("leave_household");
     if (error) {
-        alert("Der Haushalt konnte nicht verlassen werden: " + error.message);
+        await showHomeHubAlert("Der Haushalt konnte nicht verlassen werden: " + error.message);
         return;
     }
     currentHousehold = null;
@@ -173,19 +263,19 @@ async function leaveHousehold() {
     clearHomeHubCache();
     updateHouseholdUI();
     refreshHomeHubUI();
-    alert("Du hast den Haushalt verlassen.");
+    await showHomeHubAlert("Du hast den Haushalt verlassen.");
 }
 
 async function deleteHousehold() {
     if (!currentHousehold || !currentMembership || currentMembership.role !== "owner") {
-        alert("Nur der Besitzer kann den Haushalt löschen.");
+        await showHomeHubAlert("Nur der Besitzer kann den Haushalt löschen.");
         return;
     }
-    if (!confirm("Möchtest du den gesamten Haushalt wirklich löschen? Dabei werden auch die gemeinsamen HomeHub-Daten gelöscht.")) return;
+    if (!(await showHomeHubConfirm("Möchtest du den gesamten Haushalt wirklich löschen? Dabei werden auch die gemeinsamen HomeHub-Daten gelöscht.", "Haushalt löschen"))) return;
 
     const { error } = await supabaseClient.rpc("delete_my_household");
     if (error) {
-        alert("Der Haushalt konnte nicht gelöscht werden: " + error.message);
+        await showHomeHubAlert("Der Haushalt konnte nicht gelöscht werden: " + error.message);
         return;
     }
     currentHousehold = null;
@@ -194,16 +284,16 @@ async function deleteHousehold() {
     clearHomeHubCache();
     updateHouseholdUI();
     refreshHomeHubUI();
-    alert("Der Haushalt wurde gelöscht.");
+    await showHomeHubAlert("Der Haushalt wurde gelöscht.");
 }
 
 async function copyHouseholdCode() {
     if (!currentHousehold) return;
     try {
         await navigator.clipboard.writeText(currentHousehold.join_code);
-        alert("Beitrittscode kopiert: " + currentHousehold.join_code);
+        await showHomeHubAlert("Beitrittscode kopiert: " + currentHousehold.join_code);
     } catch (_) {
-        prompt("Beitrittscode:", currentHousehold.join_code);
+        await showHomeHubPrompt("Beitrittscode:", currentHousehold.join_code, "Beitrittscode");
     }
 }
 
@@ -463,21 +553,22 @@ async function logout() {
 }
 
 async function deleteAccount() {
-    const confirmed = confirm(
-        "Möchtest du dein HomeHub-Konto wirklich endgültig löschen? Deine Cloud-Daten und dein Benutzerkonto werden dabei gelöscht."
+    const confirmed = await showHomeHubConfirm(
+        "Möchtest du dein HomeHub-Konto wirklich endgültig löschen? Deine Cloud-Daten und dein Benutzerkonto werden dabei gelöscht.",
+        "Konto endgültig löschen"
     );
     if (!confirmed) return;
 
     const { error } = await supabaseClient.rpc("delete_my_account");
     if (error) {
         console.error("Konto konnte nicht gelöscht werden:", error);
-        alert("Das Konto konnte nicht gelöscht werden. Bitte führe zuerst die SQL-Datei aus, die im ZIP enthalten ist.");
+        await showHomeHubAlert("Das Konto konnte nicht gelöscht werden. Bitte führe zuerst die SQL-Datei aus, die im ZIP enthalten ist.");
         return;
     }
 
     await supabaseClient.auth.signOut();
     clearHomeHubCache();
-    alert("Dein HomeHub-Konto wurde gelöscht.");
+    await showHomeHubAlert("Dein HomeHub-Konto wurde gelöscht.");
     location.reload();
 }
 
@@ -2209,8 +2300,9 @@ checkLogin();
 // =================================
 
 async function clearHomeHubData() {
-    const confirmDelete = confirm(
-        "Möchtest du wirklich alle HomeHub-Daten löschen? Diese Daten werden auch aus Supabase entfernt."
+    const confirmDelete = await showHomeHubConfirm(
+        "Möchtest du wirklich alle HomeHub-Daten löschen? Diese Daten werden auch aus Supabase entfernt.",
+        "HomeHub-Daten löschen"
     );
 
     if (!confirmDelete) return;
@@ -2222,7 +2314,7 @@ async function clearHomeHubData() {
         if (!currentHousehold) {
             clearHomeHubCache();
             refreshHomeHubUI();
-            alert("Du bist keinem Haushalt zugeordnet.");
+            await showHomeHubAlert("Du bist keinem Haushalt zugeordnet.");
             return;
         }
 
@@ -2233,14 +2325,14 @@ async function clearHomeHubData() {
 
         if (error) {
             console.error("Cloud-Daten konnten nicht gelöscht werden:", error);
-            alert("Die Cloud-Daten konnten nicht gelöscht werden.");
+            await showHomeHubAlert("Die Cloud-Daten konnten nicht gelöscht werden.");
             return;
         }
     }
 
     clearHomeHubCache();
     refreshHomeHubUI();
-    alert("Alle HomeHub-Daten wurden gelöscht.");
+    await showHomeHubAlert("Alle HomeHub-Daten wurden gelöscht.");
 }
 
 // =================================
@@ -2309,13 +2401,13 @@ function importHomeHubData(event) {
             await queueCloudSave();
             refreshHomeHubUI();
 
-            alert(
+            await showHomeHubAlert(
                 "HomeHub wurde erfolgreich wiederhergestellt und in Supabase gespeichert."
             );
 
         } catch (error) {
 
-            alert(
+            await showHomeHubAlert(
                 "Die Datei konnte nicht gelesen werden."
             );
 
@@ -2330,7 +2422,7 @@ function importHomeHubData(event) {
 // KALENDER
 // =================================
 
-function addCalendarEvent() {
+async function addCalendarEvent() {
 
     const title = document.getElementById("eventTitle").value.trim();
     const date = document.getElementById("eventDate").value;
@@ -2342,7 +2434,7 @@ function addCalendarEvent() {
     const reminder = document.getElementById("eventReminder").value;
 
     if (!title || !date) {
-        alert("Bitte gib mindestens einen Titel und ein Datum ein.");
+        await showHomeHubAlert("Bitte gib mindestens einen Titel und ein Datum ein.");
         return;
     }
 
