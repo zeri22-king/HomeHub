@@ -3441,3 +3441,13 @@ body.dark-mode .notes-count {
     opacity: 0.6;
     cursor: not-allowed;
 }
+
+/* ================================
+   GEMEINSAMER HAUSHALT
+================================ */
+#household-code {
+    font-family: monospace;
+    font-size: 1.15rem;
+    font-weight: 800;
+    letter-spacing: 2px;
+}

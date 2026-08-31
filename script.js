@@ -23,6 +23,8 @@ let cloudLoaded = false;
 let cloudLoadPromise = null;
 let cloudSaveQueue = Promise.resolve();
 let cloudChannel = null;
+let currentHousehold = null;
+let currentMembership = null;
 
 const HOMEHUB_DATA_KEYS = [
     "homehubShopping",
@@ -82,21 +84,144 @@ function refreshHomeHubUI() {
     }
 }
 
-function subscribeToCloud(userId) {
+async function getCurrentHousehold() {
+    const { data, error } = await supabaseClient
+        .rpc("get_my_household");
+
+    if (error) {
+        console.error("Haushalt konnte nicht geladen werden:", error);
+        return null;
+    }
+
+    if (!data) return null;
+    currentHousehold = data.household || null;
+    currentMembership = data.membership || null;
+    updateHouseholdUI();
+    return currentHousehold;
+}
+
+function updateHouseholdUI() {
+    const nameEl = document.getElementById("household-name");
+    const codeEl = document.getElementById("household-code");
+    const roleEl = document.getElementById("household-role");
+    const statusEl = document.getElementById("household-status");
+
+    if (nameEl) nameEl.textContent = currentHousehold ? currentHousehold.name : "Noch kein Haushalt";
+    if (codeEl) codeEl.textContent = currentHousehold ? currentHousehold.join_code : "—";
+    if (roleEl) roleEl.textContent = currentMembership ? (currentMembership.role === "owner" ? "Besitzer" : "Mitglied") : "—";
+    if (statusEl) statusEl.textContent = currentHousehold ? "Aktiv" : "Kein Haushalt";
+}
+
+async function createHousehold() {
+    const name = prompt("Wie soll dein Haushalt heißen?", "Mein Haushalt");
+    if (!name || !name.trim()) return;
+
+    const { data, error } = await supabaseClient.rpc("create_household", {
+        p_name: name.trim()
+    });
+    if (error) {
+        console.error(error);
+        alert("Der Haushalt konnte nicht erstellt werden: " + error.message);
+        return;
+    }
+
+    currentHousehold = data.household;
+    currentMembership = data.membership;
+    updateHouseholdUI();
+    await loadCloudData(true);
+    alert("Haushalt erstellt! Dein Beitrittscode ist: " + currentHousehold.join_code);
+}
+
+async function joinHousehold() {
+    const code = prompt("Gib den 8-stelligen Beitrittscode des Haushalts ein:");
+    if (!code || !code.trim()) return;
+
+    const { data, error } = await supabaseClient.rpc("join_household", {
+        p_join_code: code.trim().toUpperCase()
+    });
+    if (error) {
+        console.error(error);
+        alert("Beitritt fehlgeschlagen: " + error.message);
+        return;
+    }
+
+    currentHousehold = data.household;
+    currentMembership = data.membership;
+    updateHouseholdUI();
+    clearHomeHubCache();
+    cloudLoaded = false;
+    await loadCloudData(true);
+    alert("Du bist jetzt Mitglied von „" + currentHousehold.name + "“.");
+}
+
+async function leaveHousehold() {
+    if (!currentHousehold) return;
+    if (currentMembership && currentMembership.role === "owner") {
+        alert("Als Besitzer kannst du den Haushalt nicht verlassen. Übertrage zuerst den Besitz oder lösche den Haushalt.");
+        return;
+    }
+    if (!confirm("Möchtest du diesen Haushalt wirklich verlassen?")) return;
+
+    const { error } = await supabaseClient.rpc("leave_household");
+    if (error) {
+        alert("Der Haushalt konnte nicht verlassen werden: " + error.message);
+        return;
+    }
+    currentHousehold = null;
+    currentMembership = null;
+    cloudLoaded = false;
+    clearHomeHubCache();
+    updateHouseholdUI();
+    refreshHomeHubUI();
+    alert("Du hast den Haushalt verlassen.");
+}
+
+async function deleteHousehold() {
+    if (!currentHousehold || !currentMembership || currentMembership.role !== "owner") {
+        alert("Nur der Besitzer kann den Haushalt löschen.");
+        return;
+    }
+    if (!confirm("Möchtest du den gesamten Haushalt wirklich löschen? Dabei werden auch die gemeinsamen HomeHub-Daten gelöscht.")) return;
+
+    const { error } = await supabaseClient.rpc("delete_my_household");
+    if (error) {
+        alert("Der Haushalt konnte nicht gelöscht werden: " + error.message);
+        return;
+    }
+    currentHousehold = null;
+    currentMembership = null;
+    cloudLoaded = false;
+    clearHomeHubCache();
+    updateHouseholdUI();
+    refreshHomeHubUI();
+    alert("Der Haushalt wurde gelöscht.");
+}
+
+async function copyHouseholdCode() {
+    if (!currentHousehold) return;
+    try {
+        await navigator.clipboard.writeText(currentHousehold.join_code);
+        alert("Beitrittscode kopiert: " + currentHousehold.join_code);
+    } catch (_) {
+        prompt("Beitrittscode:", currentHousehold.join_code);
+    }
+}
+
+function subscribeToCloud(householdId) {
     if (cloudChannel) {
         supabaseClient.removeChannel(cloudChannel);
         cloudChannel = null;
     }
 
     cloudChannel = supabaseClient
-        .channel("homehub-data-" + userId)
+        .channel("homehub-household-" + householdId)
         .on(
             "postgres_changes",
             {
                 event: "*",
                 schema: "public",
                 table: "homehub_data",
-                filter: "user_id=eq." + userId
+                filter: "household_id=eq." + householdId
             },
             function(payload) {
                 if (payload.eventType === "DELETE") {
@@ -108,28 +233,34 @@ function subscribeToCloud(userId) {
                 if (payload.new && payload.new.data) {
                     applyHomeHubCloudData(payload.new.data);
                     refreshHomeHubUI();
-                    setCloudStatus("Mit Supabase synchronisiert", true);
+                    setCloudStatus("Mit Haushalt synchronisiert", true);
                 }
             }
         )
         .subscribe();
 }
 
-async function loadCloudData() {
-    if (cloudLoaded) return true;
+async function loadCloudData(forceReload) {
+    if (!forceReload && cloudLoaded) return true;
     if (cloudLoadPromise) return cloudLoadPromise;
 
     cloudLoadPromise = (async function() {
-        const { data: sessionData, error: sessionError } =
-            await supabaseClient.auth.getSession();
-
+        const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
         if (sessionError || !sessionData.session) return false;
 
-        const userId = sessionData.session.user.id;
+        const household = await getCurrentHousehold();
+        if (!household) {
+            cloudLoaded = true;
+            clearHomeHubCache();
+            refreshHomeHubUI();
+            setCloudStatus("Kein Haushalt", false);
+            return true;
+        }
+
         const { data: rows, error } = await supabaseClient
             .from("homehub_data")
             .select("id, data, updated_at")
-            .eq("user_id", userId)
+            .eq("household_id", household.id)
             .limit(1);
 
         if (error) {
@@ -139,21 +270,19 @@ async function loadCloudData() {
         }
 
         const cloudRow = rows && rows.length ? rows[0] : null;
-
         if (cloudRow && cloudRow.data) {
-            // Cloud gewinnt beim Login: dadurch werden Daten vom Handy/PC nicht überschrieben.
             applyHomeHubCloudData(cloudRow.data);
-            console.log("HomeHub-Daten aus Supabase geladen.");
         } else {
-            // Erstes Gerät dieses Kontos: vorhandene lokale Daten einmalig übernehmen.
             const localData = getHomeHubCloudData();
             if (Object.keys(localData).length) {
                 const { error: insertError } = await supabaseClient
                     .from("homehub_data")
-                    .upsert(
-                        { user_id: userId, data: localData, updated_at: new Date().toISOString() },
-                        { onConflict: "user_id" }
-                    );
+                    .insert({
+                        household_id: household.id,
+                        user_id: sessionData.session.user.id,
+                        data: localData,
+                        updated_at: new Date().toISOString()
+                    });
                 if (insertError) {
                     console.error("Lokale HomeHub-Daten konnten nicht übernommen werden:", insertError);
                     setCloudStatus("Cloud-Fehler", false);
@@ -163,25 +292,21 @@ async function loadCloudData() {
         }
 
         cloudLoaded = true;
-        subscribeToCloud(userId);
+        subscribeToCloud(household.id);
         refreshHomeHubUI();
-        setCloudStatus("Mit Supabase synchronisiert", true);
+        setCloudStatus("Mit Haushalt synchronisiert", true);
         return true;
     })();
 
-    try {
-        return await cloudLoadPromise;
-    } finally {
-        cloudLoadPromise = null;
-    }
+    try { return await cloudLoadPromise; }
+    finally { cloudLoadPromise = null; }
 }
 
 function queueCloudSave() {
     cloudSaveQueue = cloudSaveQueue
         .catch(function() {})
         .then(async function() {
-            if (!cloudLoaded) return;
-
+            if (!cloudLoaded || !currentHousehold) return;
             const { data: sessionData } = await supabaseClient.auth.getSession();
             const session = sessionData && sessionData.session;
             if (!session) return;
@@ -190,21 +315,20 @@ function queueCloudSave() {
                 .from("homehub_data")
                 .upsert(
                     {
+                        household_id: currentHousehold.id,
                         user_id: session.user.id,
                         data: getHomeHubCloudData(),
                         updated_at: new Date().toISOString()
                     },
-                    { onConflict: "user_id" }
+                    { onConflict: "household_id" }
                 );
-
             if (error) throw error;
-            setCloudStatus("Mit Supabase synchronisiert", true);
+            setCloudStatus("Mit Haushalt synchronisiert", true);
         })
         .catch(function(error) {
             console.error("HomeHub Cloud-Speicherung fehlgeschlagen:", error);
             setCloudStatus("Cloud-Speicherung fehlgeschlagen", false);
         });
-
     return cloudSaveQueue;
 }
 
@@ -2095,10 +2219,17 @@ async function clearHomeHubData() {
     const session = sessionData && sessionData.session;
 
     if (session) {
+        if (!currentHousehold) {
+            clearHomeHubCache();
+            refreshHomeHubUI();
+            alert("Du bist keinem Haushalt zugeordnet.");
+            return;
+        }
+
         const { error } = await supabaseClient
             .from("homehub_data")
             .delete()
-            .eq("user_id", session.user.id);
+            .eq("household_id", currentHousehold.id);
 
         if (error) {
             console.error("Cloud-Daten konnten nicht gelöscht werden:", error);

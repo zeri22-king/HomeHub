@@ -883,6 +883,70 @@
 
 
 
+    <!-- HAUSHALT -->
+
+    <div class="settings-section">
+
+        <h2>🏠 Gemeinsamer Haushalt</h2>
+
+        <div class="settings-card">
+            <div class="settings-info">
+                <strong id="household-name">Noch kein Haushalt</strong>
+                <span>Gemeinsame Daten für mehrere HomeHub-Konten.</span>
+            </div>
+            <span class="settings-status" id="household-status">Kein Haushalt</span>
+        </div>
+
+        <div class="settings-card">
+            <div class="settings-info">
+                <strong>Beitrittscode</strong>
+                <span id="household-code">—</span>
+            </div>
+            <button class="settings-action" onclick="copyHouseholdCode()">📋 Kopieren</button>
+        </div>
+
+        <div class="settings-card">
+            <div class="settings-info">
+                <strong>Rolle</strong>
+                <span id="household-role">—</span>
+            </div>
+        </div>
+
+        <div class="settings-card">
+            <div class="settings-info">
+                <strong>Neuen Haushalt erstellen</strong>
+                <span>Erstelle einen eigenen Haushalt und teile den Code mit anderen.</span>
+            </div>
+            <button class="settings-action" onclick="createHousehold()">+ Erstellen</button>
+        </div>
+
+        <div class="settings-card">
+            <div class="settings-info">
+                <strong>Haushalt beitreten</strong>
+                <span>Mit einem Beitrittscode einem bestehenden Haushalt beitreten.</span>
+            </div>
+            <button class="settings-action" onclick="joinHousehold()">Beitreten</button>
+        </div>
+
+        <div class="settings-card">
+            <div class="settings-info">
+                <strong>Haushalt verlassen</strong>
+                <span>Verlasse den aktuellen Haushalt, ohne dein Konto zu löschen.</span>
+            </div>
+            <button class="settings-action" onclick="leaveHousehold()">Verlassen</button>
+        </div>
+
+        <div class="settings-card danger-card">
+            <div class="settings-info">
+                <strong>Haushalt löschen</strong>
+                <span>Nur der Besitzer kann den gemeinsamen Haushalt löschen.</span>
+            </div>
+            <button class="settings-danger" onclick="deleteHousehold()">Haushalt löschen</button>
+        </div>
+
+    </div>
+
+
     <!-- KONTO -->
 
     <div class="settings-section">
