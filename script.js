@@ -3,14 +3,54 @@
 // DEVELOPER MODE
 // =================================
 const DEVELOPER_EMAIL = "n.zerlauth@gmx.at";
+let developerAccess = false;
 
-function updateDeveloperAccess(user) {
-    const allowed = !!user && String(user.email || "").toLowerCase() === DEVELOPER_EMAIL;
+function updateDeveloperAccessUI(allowed, user) {
+    developerAccess = !!allowed;
     const nav = document.getElementById("developer-nav-button");
+    const more = document.getElementById("developer-more-menu-item");
     const page = document.getElementById("developer");
-    if (nav) nav.style.display = allowed ? "flex" : "none";
-    if (!allowed && page) page.classList.remove("active");
-    return allowed;
+    const emailEl = document.getElementById("developer-account-email");
+    if (nav) nav.style.display = developerAccess ? "flex" : "none";
+    if (more) more.style.display = developerAccess ? "flex" : "none";
+    if (emailEl) emailEl.textContent = user?.email || "—";
+    if (!developerAccess && page) page.classList.remove("active");
+    return developerAccess;
+}
+
+async function updateDeveloperAccess(user) {
+    if (!user) return updateDeveloperAccessUI(false, null);
+
+    // Primär über die in Supabase hinterlegte Entwickler-Tabelle prüfen.
+    try {
+        const { data, error } = await supabaseClient
+            .rpc("is_homehub_developer");
+        if (!error) {
+            return updateDeveloperAccessUI(data === true, user);
+        }
+    } catch (error) {
+        console.warn("Entwicklerstatus konnte nicht über Supabase geprüft werden:", error);
+    }
+
+    // Fallback für bestehende Installationen, falls die RPC-Funktion noch fehlt.
+    return updateDeveloperAccessUI(
+        String(user.email || "").toLowerCase() === DEVELOPER_EMAIL,
+        user
+    );
+}
+
+function developerReloadHomeHub() {
+    if (!developerAccess) return;
+    loadCloudData(true);
+}
+
+async function developerCheckCloud() {
+    if (!developerAccess) return;
+    const ok = await loadCloudData(true);
+    await showHomeHubAlert(
+        ok ? "Die HomeHub-Cloud-Verbindung funktioniert." : "Die HomeHub-Cloud-Verbindung konnte nicht geprüft werden.",
+        "Cloud-Status"
+    );
 }
 
 
@@ -496,6 +536,7 @@ async function login() {
 
     document.getElementById("login-screen").style.display = "none";
     updateAccountUI(data.session);
+    await updateDeveloperAccess(data.user);
     console.log("Erfolgreich angemeldet:", data.user.email);
     await loadCloudData();
 }
@@ -538,6 +579,7 @@ async function signup() {
     if (data.session) {
         document.getElementById("login-screen").style.display = "none";
         updateAccountUI(data.session);
+        await updateDeveloperAccess(data.user);
         await loadCloudData();
     } else {
         showAuthMessage("", "Konto erstellt. Bitte bestätige deine E-Mail-Adresse und melde dich danach an.");
@@ -594,6 +636,7 @@ async function checkLogin() {
     if (session) {
         loginScreen.style.display = "none";
         updateAccountUI(session);
+        await updateDeveloperAccess(session.user);
         await loadCloudData();
     } else {
         loginScreen.style.display = "flex";
@@ -628,6 +671,10 @@ let calendarWeekOffset = 0;
 // ================================
 
 function showPage(pageId) {
+
+    if (pageId === "developer" && !developerAccess) {
+        return;
+    }
 
     // Scrollposition sofort zurücksetzen
     window.scrollTo({
