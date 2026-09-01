@@ -73,6 +73,16 @@
         <nav>
 
             <button
+                id="developer-nav-button"
+                class="nav-button developer-nav-button"
+                onclick="showPage('developer')"
+                style="display:none;"
+            >
+                <span>🛠️</span>
+                Entwickler
+            </button>
+
+            <button
                 class="nav-button active-nav"
                 onclick="showPage('home')"
             >
@@ -156,6 +166,14 @@
                 </div>
             </button>
 
+            <button id="developer-more-menu-item" class="more-menu-item developer-more-menu-item" onclick="showPage('developer')" style="display:none;">
+                <span>🛠️</span>
+                <div>
+                    <strong>Entwickler</strong>
+                    <small>Nur für deinen Account</small>
+                </div>
+            </button>
+
             <button class="more-menu-item" onclick="showPage('settings')">
                 <span>⚙️</span>
                 <div>
@@ -188,6 +206,47 @@
     <!-- HAUPTBEREICH -->
 
     <main>
+
+        <section id="developer" class="page developer-page">
+            <div class="page-header">
+                <div>
+                    <div class="eyebrow">DEVELOPER MODE</div>
+                    <h1>Entwickler</h1>
+                    <p class="subtitle">Interne HomeHub-Werkzeuge – nur für den Entwickler-Account.</p>
+                </div>
+                <div class="developer-badge">🛠️ Entwickler</div>
+            </div>
+
+            <div class="developer-grid">
+                <div class="developer-card">
+                    <div class="developer-card-icon">🔐</div>
+                    <div>
+                        <h2>Developer-Zugriff</h2>
+                        <p>Angemeldet als <strong>n.zerlauth@gmx.at</strong></p>
+                        <span class="developer-status">● Berechtigt</span>
+                    </div>
+                </div>
+
+                <div class="developer-card">
+                    <div class="developer-card-icon">☁️</div>
+                    <div>
+                        <h2>Supabase</h2>
+                        <p>Der bestehende Datenbank- und Authentifizierungsbereich bleibt unverändert.</p>
+                    </div>
+                </div>
+
+                <div class="developer-card developer-card-wide">
+                    <div class="developer-card-icon">🧪</div>
+                    <div>
+                        <h2>Entwicklerbereich</h2>
+                        <p>Hier können später sichere Admin- und Testwerkzeuge ergänzt werden.</p>
+                        <div class="developer-note">Der Bereich ist für normale Benutzer nicht sichtbar.</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
 
 
         <!-- =========================

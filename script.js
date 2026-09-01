@@ -11,8 +11,8 @@ function updateDeveloperAccessUI(allowed, user) {
     const more = document.getElementById("developer-more-menu-item");
     const page = document.getElementById("developer");
     const emailEl = document.getElementById("developer-account-email");
-    if (nav) nav.style.display = developerAccess ? "flex" : "none";
-    if (more) more.style.display = developerAccess ? "flex" : "none";
+    if (nav) nav.classList.toggle("developer-visible", developerAccess);
+    if (more) more.classList.toggle("developer-visible", developerAccess);
     if (emailEl) emailEl.textContent = user?.email || "—";
     if (!developerAccess && page) page.classList.remove("active");
     return developerAccess;
