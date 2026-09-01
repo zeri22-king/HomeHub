@@ -353,33 +353,36 @@ async function copyHouseholdCode() {
     }
 }
 
-function subscribeToCloud(householdId) {
+function subscribeToCloud(userId) {
+    if (!userId) return;
     if (cloudChannel) {
         supabaseClient.removeChannel(cloudChannel);
         cloudChannel = null;
     }
 
+    // Die aktuelle homehub_data-Tabelle speichert die Daten pro Benutzer.
+    // Deshalb muss Realtime nach user_id und nicht nach household_id filtern.
     cloudChannel = supabaseClient
-        .channel("homehub-household-" + householdId)
+        .channel("homehub-user-" + userId)
         .on(
             "postgres_changes",
             {
                 event: "*",
                 schema: "public",
                 table: "homehub_data",
-                filter: "household_id=eq." + householdId
+                filter: "user_id=eq." + userId
             },
             function(payload) {
                 if (payload.eventType === "DELETE") {
                     clearHomeHubCache();
-                    cloudLoaded = false;
                     refreshHomeHubUI();
+                    setCloudStatus("Cloud-Daten gelöscht", true);
                     return;
                 }
                 if (payload.new && payload.new.data) {
                     applyHomeHubCloudData(payload.new.data);
                     refreshHomeHubUI();
-                    setCloudStatus("Mit Haushalt synchronisiert", true);
+                    setCloudStatus("Mit Cloud synchronisiert", true);
                 }
             }
         )
@@ -392,21 +395,18 @@ async function loadCloudData(forceReload) {
 
     cloudLoadPromise = (async function() {
         const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
-        if (sessionError || !sessionData.session) return false;
-
-        const household = await getCurrentHousehold();
-        if (!household) {
-            cloudLoaded = true;
-            clearHomeHubCache();
-            refreshHomeHubUI();
-            setCloudStatus("Kein Haushalt", false);
-            return true;
+        const session = sessionData && sessionData.session;
+        if (sessionError || !session) {
+            setCloudStatus("Nicht angemeldet", false);
+            return false;
         }
 
+        const userId = session.user.id;
         const { data: rows, error } = await supabaseClient
             .from("homehub_data")
-            .select("id, data, updated_at")
-            .eq("household_id", household.id)
+            .select("id, user_id, data, updated_at")
+            .eq("user_id", userId)
+            .order("updated_at", { ascending: false })
             .limit(1);
 
         if (error) {
@@ -419,13 +419,13 @@ async function loadCloudData(forceReload) {
         if (cloudRow && cloudRow.data) {
             applyHomeHubCloudData(cloudRow.data);
         } else {
+            // Erstes Gerät dieses Accounts: vorhandene lokale Daten einmalig in die Cloud übernehmen.
             const localData = getHomeHubCloudData();
             if (Object.keys(localData).length) {
                 const { error: insertError } = await supabaseClient
                     .from("homehub_data")
                     .insert({
-                        household_id: household.id,
-                        user_id: sessionData.session.user.id,
+                        user_id: userId,
                         data: localData,
                         updated_at: new Date().toISOString()
                     });
@@ -438,9 +438,9 @@ async function loadCloudData(forceReload) {
         }
 
         cloudLoaded = true;
-        subscribeToCloud(household.id);
+        subscribeToCloud(userId);
         refreshHomeHubUI();
-        setCloudStatus("Mit Haushalt synchronisiert", true);
+        setCloudStatus("Mit Cloud synchronisiert", true);
         return true;
     })();
 
@@ -452,24 +452,49 @@ function queueCloudSave() {
     cloudSaveQueue = cloudSaveQueue
         .catch(function() {})
         .then(async function() {
-            if (!cloudLoaded || !currentHousehold) return;
+            if (!cloudLoaded) return;
+
             const { data: sessionData } = await supabaseClient.auth.getSession();
             const session = sessionData && sessionData.session;
             if (!session) return;
 
-            const { error } = await supabaseClient
+            const userId = session.user.id;
+            const cloudData = getHomeHubCloudData();
+
+            // Keine Annahme über einen UNIQUE-Index auf user_id machen.
+            // So funktioniert die Speicherung auch mit der bestehenden Tabelle.
+            const { data: existingRows, error: selectError } = await supabaseClient
                 .from("homehub_data")
-                .upsert(
-                    {
-                        household_id: currentHousehold.id,
-                        user_id: session.user.id,
-                        data: getHomeHubCloudData(),
+                .select("id")
+                .eq("user_id", userId)
+                .order("updated_at", { ascending: false })
+                .limit(1);
+
+            if (selectError) throw selectError;
+
+            let error = null;
+            if (existingRows && existingRows.length) {
+                const result = await supabaseClient
+                    .from("homehub_data")
+                    .update({
+                        data: cloudData,
                         updated_at: new Date().toISOString()
-                    },
-                    { onConflict: "household_id" }
-                );
+                    })
+                    .eq("id", existingRows[0].id);
+                error = result.error;
+            } else {
+                const result = await supabaseClient
+                    .from("homehub_data")
+                    .insert({
+                        user_id: userId,
+                        data: cloudData,
+                        updated_at: new Date().toISOString()
+                    });
+                error = result.error;
+            }
+
             if (error) throw error;
-            setCloudStatus("Mit Haushalt synchronisiert", true);
+            setCloudStatus("Mit Cloud synchronisiert", true);
         })
         .catch(function(error) {
             console.error("HomeHub Cloud-Speicherung fehlgeschlagen:", error);
@@ -2376,17 +2401,10 @@ async function clearHomeHubData() {
     const session = sessionData && sessionData.session;
 
     if (session) {
-        if (!currentHousehold) {
-            clearHomeHubCache();
-            refreshHomeHubUI();
-            await showHomeHubAlert("Du bist keinem Haushalt zugeordnet.");
-            return;
-        }
-
         const { error } = await supabaseClient
             .from("homehub_data")
             .delete()
-            .eq("household_id", currentHousehold.id);
+            .eq("user_id", session.user.id);
 
         if (error) {
             console.error("Cloud-Daten konnten nicht gelöscht werden:", error);
