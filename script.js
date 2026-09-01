@@ -21,22 +21,23 @@ function updateDeveloperAccessUI(allowed, user) {
 async function updateDeveloperAccess(user) {
     if (!user) return updateDeveloperAccessUI(false, null);
 
-    // Primär über die in Supabase hinterlegte Entwickler-Tabelle prüfen.
+    // Der Entwickler-Account wird anhand der E-Mail eindeutig erkannt.
+    // Zusätzlich darf die Supabase-Tabelle den Zugriff bestätigen.
+    const isDeveloperEmail = String(user.email || "").trim().toLowerCase() === DEVELOPER_EMAIL;
+    if (isDeveloperEmail) {
+        return updateDeveloperAccessUI(true, user);
+    }
+
     try {
-        const { data, error } = await supabaseClient
-            .rpc("is_homehub_developer");
-        if (!error) {
-            return updateDeveloperAccessUI(data === true, user);
+        const { data, error } = await supabaseClient.rpc("is_homehub_developer");
+        if (!error && data === true) {
+            return updateDeveloperAccessUI(true, user);
         }
     } catch (error) {
         console.warn("Entwicklerstatus konnte nicht über Supabase geprüft werden:", error);
     }
 
-    // Fallback für bestehende Installationen, falls die RPC-Funktion noch fehlt.
-    return updateDeveloperAccessUI(
-        String(user.email || "").toLowerCase() === DEVELOPER_EMAIL,
-        user
-    );
+    return updateDeveloperAccessUI(false, user);
 }
 
 function developerReloadHomeHub() {
@@ -650,8 +651,10 @@ supabaseClient.auth.onAuthStateChange(function(event, session) {
     if (session) {
         loginScreen.style.display = "none";
         updateAccountUI(session);
-        setTimeout(function() { loadCloudData(); }, 0);
+        // Wichtig: Auch bei einer bereits bestehenden Session den Entwicklerzugriff setzen.
+        setTimeout(function() { updateDeveloperAccess(session.user); loadCloudData(); }, 0);
     } else {
+        updateDeveloperAccess(null);
         loginScreen.style.display = "flex";
         cloudLoaded = false;
         if (cloudChannel) {
