@@ -1,5 +1,20 @@
 
 // =================================
+// DEVELOPER MODE
+// =================================
+const DEVELOPER_EMAIL = "n.zerlauth@gmx.at";
+
+function updateDeveloperAccess(user) {
+    const allowed = !!user && String(user.email || "").toLowerCase() === DEVELOPER_EMAIL;
+    const nav = document.getElementById("developer-nav-button");
+    const page = document.getElementById("developer");
+    if (nav) nav.style.display = allowed ? "flex" : "none";
+    if (!allowed && page) page.classList.remove("active");
+    return allowed;
+}
+
+
+// =================================
 // HOMeHUB DIALOGE
 // Ersetzt Browser-alert/confirm/prompt durch eigene HomeHub-Popups.
 // =================================
@@ -3485,3 +3500,11 @@ setInterval(checkCalendarReminders, 30000);
 
 // Direkt beim Laden prüfen
 checkCalendarReminders();
+
+
+// Developer access hook. It only controls visibility; sensitive database actions must use Supabase RLS.
+if (typeof supabaseClient !== "undefined" && supabaseClient?.auth) {
+    supabaseClient.auth.onAuthStateChange((_event, session) => {
+        updateDeveloperAccess(session?.user || null);
+    });
+}

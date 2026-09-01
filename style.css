@@ -3590,49 +3590,99 @@ body.dark-mode .notes-count {
 }
 
 
-/* HomeHub Modern UI refresh - design only */
-:root{--radius-xl:22px;--radius-lg:18px;--radius-md:14px;--shadow-soft:0 10px 35px rgba(23,32,51,.06);--shadow-hover:0 14px 38px rgba(23,32,51,.10)}
-main{padding:42px 52px 64px;max-width:1540px;margin:0 auto}
-.page-header,.home-header{margin-bottom:34px}
-.form-card,.settings-card,.today-page-progress-card,.today-page-item,.today-empty-item,.today-all-done{box-shadow:var(--shadow-soft)}
-.form-card{border-radius:var(--radius-xl);padding:24px;margin-bottom:34px}
-.form-grid{gap:12px}
-.form-grid input,.form-grid select,.primary-button,.secondary-button,.settings-action,.settings-danger{min-height:46px;border-radius:12px}
-.primary-button{box-shadow:0 5px 16px rgba(79,124,255,.20)}
-.settings-section{margin-bottom:34px;padding:0}
-.settings-section>h2{margin-bottom:14px;font-size:20px}
-.settings-card{min-height:72px;border-radius:16px;padding:18px 20px;margin-bottom:10px;align-items:center;gap:18px}
-.settings-card:hover{box-shadow:var(--shadow-hover);transform:translateY(-1px)}
-.settings-info{gap:5px;min-width:0}
-.settings-info strong{font-size:15px}
-.settings-info span{line-height:1.45}
-.settings-action,.settings-danger{white-space:nowrap;padding:11px 16px}
-.danger-card{border-color:rgba(239,68,68,.18)}
-@media(max-width:900px){main{padding:30px 24px 50px}.dashboard-grid{grid-template-columns:repeat(2,1fr)}.form-grid{grid-template-columns:1fr 1fr}.form-grid .primary-button{grid-column:1/-1}}
-@media(max-width:600px){
- body{padding-top:0}
- .mobile-app-header{display:flex;position:sticky;top:0;z-index:200;height:58px;align-items:center;padding:10px 16px;gap:10px;background:rgba(17,24,39,.96);backdrop-filter:blur(12px);color:#fff;border-bottom:1px solid rgba(255,255,255,.08)}
- .mobile-app-header img{width:34px;height:34px;object-fit:contain;border-radius:10px}.mobile-app-header strong{font-size:17px}
- .sidebar{position:sticky;top:58px;z-index:150;border-radius:0 0 18px 18px;padding:9px 10px;box-shadow:0 8px 25px rgba(0,0,0,.12)}
- .logo{display:none}.sidebar-bottom{display:none}
- nav{grid-template-columns:repeat(4,1fr);gap:5px}.nav-button{min-height:55px;padding:7px 3px;font-size:10px}.nav-button span{font-size:18px}
- .more-nav-button{display:flex}
- main{padding:22px 14px 38px}
- .page-header,.home-header{margin-bottom:22px}
- h1{font-size:29px;margin-bottom:6px}.subtitle{font-size:14px;line-height:1.45}
- .top-date{display:none}
- .dashboard-grid{grid-template-columns:1fr;gap:12px}.dashboard-card{min-height:132px;padding:20px}
- .form-card{padding:16px;border-radius:18px;margin-bottom:28px}.form-grid{grid-template-columns:1fr;gap:10px}.form-grid .primary-button{grid-column:auto;width:100%}
- .form-grid input,.form-grid select,.primary-button{min-height:48px}
- .list-header{align-items:center;margin-bottom:14px;gap:10px}.list-header h2{font-size:20px}
- .secondary-button{min-height:44px;padding:10px 12px}
- .shopping-item,.task-item{padding:14px 13px;gap:11px;border-radius:14px;margin-bottom:8px}.delete-button{padding:8px}
- .today-page-progress-card{padding:17px 16px;margin-bottom:26px}.today-page-section{margin-bottom:28px}.today-page-item,.today-empty-item{padding:13px;border-radius:14px}
- .settings-section{margin-bottom:27px}.settings-section>h2{font-size:18px;margin-bottom:10px}
- .settings-card{display:flex;flex-wrap:wrap;min-height:0;padding:15px 14px;margin-bottom:8px;border-radius:15px;gap:10px}
- .settings-info{flex:1 1 100%}.settings-card>.settings-action,.settings-card>.settings-danger{margin-left:auto}
- .settings-status,.settings-version{font-size:12px}
- .more-menu{position:absolute;left:10px;right:10px;top:100%;z-index:300;border-radius:14px;box-shadow:0 14px 35px rgba(0,0,0,.25)}
- .homehub-modal-card{width:min(92vw,420px);border-radius:22px}
+/* =================================
+   DEVELOPER MODE
+================================= */
+.developer-nav-button {
+    margin-top: 8px;
 }
-@media(min-width:601px){.mobile-app-header{display:none}}
+
+.developer-page .page-header {
+    align-items: center;
+}
+
+.developer-badge {
+    padding: 10px 14px;
+    border: 1px solid rgba(79,124,255,.18);
+    border-radius: 999px;
+    background: #eef2ff;
+    color: var(--primary-dark);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.developer-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.developer-card {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    padding: 22px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    box-shadow: 0 8px 30px rgba(23,32,51,.05);
+}
+
+.developer-card-wide {
+    grid-column: 1 / -1;
+}
+
+.developer-card-icon {
+    width: 48px;
+    height: 48px;
+    flex: 0 0 48px;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    background: #eef2ff;
+    font-size: 21px;
+}
+
+.developer-card h2 {
+    margin-bottom: 7px;
+    font-size: 18px;
+}
+
+.developer-card p {
+    color: var(--muted);
+    line-height: 1.5;
+    font-size: 14px;
+}
+
+.developer-status {
+    display: inline-block;
+    margin-top: 10px;
+    color: var(--green);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.developer-note {
+    margin-top: 14px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: #f7f8fb;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+@media (max-width: 700px) {
+    .developer-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .developer-card-wide {
+        grid-column: auto;
+    }
+
+    .developer-page .page-header {
+        align-items: flex-start;
+        gap: 14px;
+        flex-direction: column;
+    }
+}
