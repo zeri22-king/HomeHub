@@ -14,6 +14,8 @@ function updateDeveloperAccessUI(allowed, user) {
     if (nav) nav.classList.toggle("developer-visible", developerAccess);
     if (more) more.classList.toggle("developer-visible", developerAccess);
     if (emailEl) emailEl.textContent = user?.email || "—";
+    const shortEl = document.getElementById("developer-account-short");
+    if (shortEl) shortEl.textContent = user?.email ? "Entwickler-Account" : "—";
     if (!developerAccess && page) page.classList.remove("active");
     return developerAccess;
 }

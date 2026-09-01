@@ -208,45 +208,78 @@
     <main>
 
         <section id="developer" class="page developer-page">
-            <div class="page-header">
-                <div>
-                    <div class="eyebrow">DEVELOPER MODE</div>
-                    <h1>Entwickler</h1>
-                    <p class="subtitle">Interne HomeHub-Werkzeuge – nur für den Entwickler-Account.</p>
+            <div class="developer-hero">
+                <div class="developer-hero-main">
+                    <div class="developer-kicker"><span class="developer-live-dot"></span> DEVELOPER MODE</div>
+                    <h1>Entwicklerbereich</h1>
+                    <p>Deine internen HomeHub-Werkzeuge – übersichtlich an einem Ort.</p>
                 </div>
-                <div class="developer-badge">🛠️ Entwickler</div>
+                <div class="developer-hero-mark">🛠️</div>
             </div>
 
-            <div class="developer-grid">
-                <div class="developer-card">
-                    <div class="developer-card-icon">🔐</div>
-                    <div>
-                        <h2>Developer-Zugriff</h2>
-                        <p>Angemeldet als <strong>n.zerlauth@gmx.at</strong></p>
-                        <span class="developer-status">● Berechtigt</span>
-                    </div>
+            <div class="developer-overview">
+                <div class="developer-overview-item">
+                    <span class="developer-overview-icon">🔐</span>
+                    <div><small>Zugriff</small><strong>Berechtigt</strong></div>
                 </div>
+                <div class="developer-overview-item">
+                    <span class="developer-overview-icon">☁️</span>
+                    <div><small>Cloud</small><strong>Supabase</strong></div>
+                </div>
+                <div class="developer-overview-item">
+                    <span class="developer-overview-icon">👤</span>
+                    <div><small>Account</small><strong id="developer-account-short">Entwickler</strong></div>
+                </div>
+            </div>
 
-                <div class="developer-card">
-                    <div class="developer-card-icon">☁️</div>
-                    <div>
-                        <h2>Supabase</h2>
-                        <p>Der bestehende Datenbank- und Authentifizierungsbereich bleibt unverändert.</p>
-                    </div>
+            <div class="developer-section-title">
+                <div>
+                    <span class="developer-section-kicker">KONTROLLE</span>
+                    <h2>Entwickler-Werkzeuge</h2>
                 </div>
+                <span class="developer-section-count">Nur für dich</span>
+            </div>
 
-                <div class="developer-card developer-card-wide">
-                    <div class="developer-card-icon">🧪</div>
-                    <div>
-                        <h2>Entwicklerbereich</h2>
-                        <p>Hier können später sichere Admin- und Testwerkzeuge ergänzt werden.</p>
-                        <div class="developer-note">Der Bereich ist für normale Benutzer nicht sichtbar.</div>
+            <div class="developer-tools-grid">
+                <article class="developer-tool-card developer-tool-access">
+                    <div class="developer-tool-top">
+                        <div class="developer-tool-icon">🔐</div>
+                        <span class="developer-status modern">● Aktiv</span>
                     </div>
-                </div>
+                    <h3>Developer-Zugriff</h3>
+                    <p>Dieser Bereich ist mit deinem Entwickler-Account verbunden.</p>
+                    <div class="developer-account-box">
+                        <span>Angemeldet als</span>
+                        <strong id="developer-account-email">n.zerlauth@gmx.at</strong>
+                    </div>
+                </article>
+
+                <article class="developer-tool-card developer-tool-cloud">
+                    <div class="developer-tool-top">
+                        <div class="developer-tool-icon">☁️</div>
+                        <span class="developer-cloud-pill"><span class="developer-live-dot"></span> Cloud</span>
+                    </div>
+                    <h3>Cloud & Synchronisation</h3>
+                    <p>Prüfe die Verbindung oder lade die aktuellen HomeHub-Daten neu.</p>
+                    <div class="developer-actions">
+                        <button class="developer-action secondary" onclick="developerCheckCloud()">Verbindung prüfen</button>
+                        <button class="developer-action primary" onclick="developerReloadHomeHub()">Daten neu laden</button>
+                    </div>
+                </article>
+
+                <article class="developer-tool-card developer-tool-info">
+                    <div class="developer-tool-top">
+                        <div class="developer-tool-icon">🧪</div>
+                        <span class="developer-info-pill">Intern</span>
+                    </div>
+                    <h3>Entwicklerbereich</h3>
+                    <p>Hier können später weitere sichere Test-, Diagnose- und Admin-Werkzeuge ergänzt werden.</p>
+                    <div class="developer-note-modern">
+                        <span>✓</span> Normale Benutzer sehen diesen Bereich nicht.
+                    </div>
+                </article>
             </div>
         </section>
-
-
 
 
         <!-- =========================
