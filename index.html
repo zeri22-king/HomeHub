@@ -5,10 +5,10 @@
 <link rel="icon" type="image/png" href="icon.png">
 <meta name="theme-color" content="#111827">
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>HomeHub</title>
 
-    <link rel="stylesheet" href="style.css?v=4">
+    <link rel="stylesheet" href="style.css?v=5">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
@@ -73,16 +73,6 @@
         <nav>
 
             <button
-                id="developer-nav-button"
-                class="nav-button developer-nav-button"
-                onclick="showPage('developer')"
-                style="display:none;"
-            >
-                <span>🛠️</span>
-                Entwickler
-            </button>
-
-            <button
                 class="nav-button active-nav"
                 onclick="showPage('home')"
             >
@@ -131,6 +121,16 @@
 </button>
 
 <button
+    id="developer-nav-button"
+    class="nav-button developer-nav-button desktop-only-nav"
+    onclick="showPage('developer')"
+    aria-hidden="true"
+>
+    <span>🛠️</span>
+    Entwickler
+</button>
+
+<button
     class="nav-button desktop-only-nav"
     onclick="showPage('settings')"
 >
@@ -166,7 +166,7 @@
                 </div>
             </button>
 
-            <button id="developer-more-menu-item" class="more-menu-item developer-more-menu-item" onclick="showPage('developer')" style="display:none;">
+            <button id="developer-more-menu-item" class="more-menu-item developer-more-menu-item" onclick="showPage('developer')" aria-hidden="true">
                 <span>🛠️</span>
                 <div>
                     <strong>Entwickler</strong>
@@ -1081,7 +1081,7 @@
 
 </main>
 
-<script src="script.js?v=4"></script>
+<script src="script.js?v=5"></script>
 
 
 

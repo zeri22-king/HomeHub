@@ -360,17 +360,19 @@ function subscribeToCloud(userId) {
         cloudChannel = null;
     }
 
-    // Die aktuelle homehub_data-Tabelle speichert die Daten pro Benutzer.
-    // Deshalb muss Realtime nach user_id und nicht nach household_id filtern.
+    const householdId = currentHousehold?.id || null;
+    const filterColumn = householdId ? "household_id" : "user_id";
+    const filterValue = householdId || userId;
+
     cloudChannel = supabaseClient
-        .channel("homehub-user-" + userId)
+        .channel("homehub-sync-" + filterColumn + "-" + filterValue)
         .on(
             "postgres_changes",
             {
                 event: "*",
                 schema: "public",
                 table: "homehub_data",
-                filter: "user_id=eq." + userId
+                filter: filterColumn + "=eq." + filterValue
             },
             function(payload) {
                 if (payload.eventType === "DELETE") {
@@ -402,10 +404,22 @@ async function loadCloudData(forceReload) {
         }
 
         const userId = session.user.id;
-        const { data: rows, error } = await supabaseClient
+        // Beim Login zuerst den aktuellen Haushalt laden. Dadurch nutzen
+        // PC und Handy denselben Datensatz und nicht zwei getrennte Benutzer-Caches.
+        try { await getCurrentHousehold(); } catch (error) {
+            console.warn("Haushalt konnte beim Cloud-Start nicht geladen werden:", error);
+        }
+
+        const householdId = currentHousehold?.id || null;
+        let query = supabaseClient
             .from("homehub_data")
-            .select("id, user_id, data, updated_at")
-            .eq("user_id", userId)
+            .select("id, user_id, household_id, data, updated_at");
+
+        query = householdId
+            ? query.eq("household_id", householdId)
+            : query.eq("user_id", userId);
+
+        const { data: rows, error } = await query
             .order("updated_at", { ascending: false })
             .limit(1);
 
@@ -419,16 +433,21 @@ async function loadCloudData(forceReload) {
         if (cloudRow && cloudRow.data) {
             applyHomeHubCloudData(cloudRow.data);
         } else {
-            // Erstes Gerät dieses Accounts: vorhandene lokale Daten einmalig in die Cloud übernehmen.
+            // Erstes Gerät des Haushalts: vorhandene lokale Daten übernehmen.
             const localData = getHomeHubCloudData();
             if (Object.keys(localData).length) {
+                const payload = {
+                    user_id: userId,
+                    data: localData,
+                    updated_at: new Date().toISOString()
+                };
+                if (householdId) payload.household_id = householdId;
+
+                const conflictColumn = householdId ? "household_id" : "user_id";
                 const { error: insertError } = await supabaseClient
                     .from("homehub_data")
-                    .insert({
-                        user_id: userId,
-                        data: localData,
-                        updated_at: new Date().toISOString()
-                    });
+                    .upsert(payload, { onConflict: conflictColumn });
+
                 if (insertError) {
                     console.error("Lokale HomeHub-Daten konnten nicht übernommen werden:", insertError);
                     setCloudStatus("Cloud-Fehler", false);
@@ -460,38 +479,21 @@ function queueCloudSave() {
 
             const userId = session.user.id;
             const cloudData = getHomeHubCloudData();
+            const householdId = currentHousehold?.id || null;
 
-            // Keine Annahme über einen UNIQUE-Index auf user_id machen.
-            // So funktioniert die Speicherung auch mit der bestehenden Tabelle.
-            const { data: existingRows, error: selectError } = await supabaseClient
+            const payload = {
+                user_id: userId,
+                data: cloudData,
+                updated_at: new Date().toISOString()
+            };
+            if (householdId) payload.household_id = householdId;
+
+            // Atomar speichern: verhindert den 409 duplicate-key Fehler,
+            // wenn Handy und PC nahezu gleichzeitig speichern.
+            const conflictColumn = householdId ? "household_id" : "user_id";
+            const { error } = await supabaseClient
                 .from("homehub_data")
-                .select("id")
-                .eq("user_id", userId)
-                .order("updated_at", { ascending: false })
-                .limit(1);
-
-            if (selectError) throw selectError;
-
-            let error = null;
-            if (existingRows && existingRows.length) {
-                const result = await supabaseClient
-                    .from("homehub_data")
-                    .update({
-                        data: cloudData,
-                        updated_at: new Date().toISOString()
-                    })
-                    .eq("id", existingRows[0].id);
-                error = result.error;
-            } else {
-                const result = await supabaseClient
-                    .from("homehub_data")
-                    .insert({
-                        user_id: userId,
-                        data: cloudData,
-                        updated_at: new Date().toISOString()
-                    });
-                error = result.error;
-            }
+                .upsert(payload, { onConflict: conflictColumn });
 
             if (error) throw error;
             setCloudStatus("Mit Cloud synchronisiert", true);
@@ -663,6 +665,7 @@ async function checkLogin() {
         loginScreen.style.display = "none";
         updateAccountUI(session);
         await updateDeveloperAccess(session.user);
+        await getCurrentHousehold();
         await loadCloudData();
     } else {
         loginScreen.style.display = "flex";
@@ -3570,9 +3573,3 @@ setInterval(checkCalendarReminders, 30000);
 checkCalendarReminders();
 
 
-// Developer access hook. It only controls visibility; sensitive database actions must use Supabase RLS.
-if (typeof supabaseClient !== "undefined" && supabaseClient?.auth) {
-    supabaseClient.auth.onAuthStateChange((_event, session) => {
-        updateDeveloperAccess(session?.user || null);
-    });
-}
