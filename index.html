@@ -14,6 +14,12 @@
 
 <body>
 
+<!-- MOBILE APP HEADER -->
+<header class="mobile-app-header" aria-label="HomeHub">
+    <img src="icon.png" alt="HomeHub Logo">
+    <strong>HomeHub</strong>
+</header>
+
 <!-- LOGIN -->
 <div id="login-screen" class="login-screen">
     <div class="login-box">
@@ -42,7 +48,16 @@
             Anmelden
         </button>
 
+        <button id="signup-button" class="login-secondary-button" onclick="signup()">
+            Konto erstellen
+        </button>
+
+        <button class="login-link-button" onclick="resetPassword()">
+            Passwort vergessen?
+        </button>
+
         <p id="login-error" class="login-error"></p>
+        <p id="login-message" class="login-message"></p>
     </div>
 </div>
 
@@ -56,6 +71,16 @@
 </div>
 
         <nav>
+
+            <button
+                id="developer-nav-button"
+                class="nav-button developer-nav-button"
+                onclick="showPage('developer')"
+                style="display:none;"
+            >
+                <span>🛠️</span>
+                Entwickler
+            </button>
 
             <button
                 class="nav-button active-nav"
@@ -114,16 +139,6 @@
 </button>
 
 <button
-    class="nav-button desktop-only-nav"
-    id="developer-nav-button"
-    onclick="showPage('developer')"
-    style="display:none;"
->
-    <span>🛠️</span>
-    Entwickler
-</button>
-
-<button
     class="nav-button more-nav-button"
     id="moreNavButton"
     onclick="toggleMoreMenu()"
@@ -158,14 +173,6 @@
                     <small>HomeHub anpassen</small>
                 </div>
             </button>
-
-            <button class="more-menu-item" id="developer-more-menu-item" onclick="showPage('developer')" style="display:none;">
-                <span>🛠️</span>
-                <div>
-                    <strong>Entwickler</strong>
-                    <small>Nur für den Entwickler-Account</small>
-                </div>
-            </button>
         </div>
 
         <div class="sidebar-bottom">
@@ -181,7 +188,7 @@
 
             <div class="offline-status">
                 <span class="status-dot"></span>
-                Lokal gespeichert
+                <span id="cloud-status-text">Nicht angemeldet</span>
             </div>
         </div>
 
@@ -191,6 +198,47 @@
     <!-- HAUPTBEREICH -->
 
     <main>
+
+        <section id="developer" class="page developer-page">
+            <div class="page-header">
+                <div>
+                    <div class="eyebrow">DEVELOPER MODE</div>
+                    <h1>Entwickler</h1>
+                    <p class="subtitle">Interne HomeHub-Werkzeuge – nur für den Entwickler-Account.</p>
+                </div>
+                <div class="developer-badge">🛠️ Entwickler</div>
+            </div>
+
+            <div class="developer-grid">
+                <div class="developer-card">
+                    <div class="developer-card-icon">🔐</div>
+                    <div>
+                        <h2>Developer-Zugriff</h2>
+                        <p>Angemeldet als <strong>n.zerlauth@gmx.at</strong></p>
+                        <span class="developer-status">● Berechtigt</span>
+                    </div>
+                </div>
+
+                <div class="developer-card">
+                    <div class="developer-card-icon">☁️</div>
+                    <div>
+                        <h2>Supabase</h2>
+                        <p>Der bestehende Datenbank- und Authentifizierungsbereich bleibt unverändert.</p>
+                    </div>
+                </div>
+
+                <div class="developer-card developer-card-wide">
+                    <div class="developer-card-icon">🧪</div>
+                    <div>
+                        <h2>Entwicklerbereich</h2>
+                        <p>Hier können später sichere Admin- und Testwerkzeuge ergänzt werden.</p>
+                        <div class="developer-note">Der Bereich ist für normale Benutzer nicht sichtbar.</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
 
 
         <!-- =========================
@@ -688,62 +736,6 @@
 </section>
 
 <!-- ================================
-     ENTWICKLER
-================================ -->
-
-<section id="developer" class="page">
-
-    <header class="page-header">
-        <div>
-            <p class="eyebrow">HOMEHUB INTERN</p>
-            <h1>🛠️ Entwickler</h1>
-            <p class="subtitle">Interne Werkzeuge und Informationen für den HomeHub-Entwickler.</p>
-        </div>
-    </header>
-
-    <div class="settings-section">
-        <h2>🔐 Entwicklerzugriff</h2>
-        <div class="settings-card">
-            <div class="settings-info">
-                <strong>Entwicklermodus aktiv</strong>
-                <span>Dieser Bereich ist ausschließlich für deinen freigeschalteten HomeHub-Account sichtbar.</span>
-            </div>
-            <span class="settings-status">Aktiv</span>
-        </div>
-    </div>
-
-    <div class="settings-section">
-        <h2>🧪 Werkzeuge</h2>
-        <div class="settings-card">
-            <div class="settings-info">
-                <strong>HomeHub neu laden</strong>
-                <span>Lädt die aktuelle Oberfläche und Cloud-Daten erneut.</span>
-            </div>
-            <button class="settings-action" onclick="developerReloadHomeHub()">↻ Neu laden</button>
-        </div>
-        <div class="settings-card">
-            <div class="settings-info">
-                <strong>Cloud-Status prüfen</strong>
-                <span>Prüft die Verbindung und zeigt den aktuellen Status an.</span>
-            </div>
-            <button class="settings-action" onclick="developerCheckCloud()">☁ Prüfen</button>
-        </div>
-    </div>
-
-    <div class="settings-section">
-        <h2>ℹ️ Account</h2>
-        <div class="settings-card">
-            <div class="settings-info">
-                <strong>Entwickler-Account</strong>
-                <span id="developer-account-email">—</span>
-            </div>
-            <span class="settings-status">Freigeschaltet</span>
-        </div>
-    </div>
-
-</section>
-
-<!-- ================================
      EINSTELLUNGEN
 ================================ -->
 
@@ -948,6 +940,103 @@
 
 
 
+    <!-- HAUSHALT -->
+
+    <div class="settings-section">
+
+        <h2>🏠 Gemeinsamer Haushalt</h2>
+
+        <div class="settings-card">
+            <div class="settings-info">
+                <strong id="household-name">Noch kein Haushalt</strong>
+                <span>Gemeinsame Daten für mehrere HomeHub-Konten.</span>
+            </div>
+            <span class="settings-status" id="household-status">Kein Haushalt</span>
+        </div>
+
+        <div class="settings-card">
+            <div class="settings-info">
+                <strong>Beitrittscode</strong>
+                <span id="household-code">—</span>
+            </div>
+            <button class="settings-action" onclick="copyHouseholdCode()">📋 Kopieren</button>
+        </div>
+
+        <div class="settings-card">
+            <div class="settings-info">
+                <strong>Rolle</strong>
+                <span id="household-role">—</span>
+            </div>
+        </div>
+
+        <div class="settings-card">
+            <div class="settings-info">
+                <strong>Neuen Haushalt erstellen</strong>
+                <span>Erstelle einen eigenen Haushalt und teile den Code mit anderen.</span>
+            </div>
+            <button class="settings-action" onclick="createHousehold()">+ Erstellen</button>
+        </div>
+
+        <div class="settings-card">
+            <div class="settings-info">
+                <strong>Haushalt beitreten</strong>
+                <span>Mit einem Beitrittscode einem bestehenden Haushalt beitreten.</span>
+            </div>
+            <button class="settings-action" onclick="joinHousehold()">Beitreten</button>
+        </div>
+
+        <div class="settings-card">
+            <div class="settings-info">
+                <strong>Haushalt verlassen</strong>
+                <span>Verlasse den aktuellen Haushalt, ohne dein Konto zu löschen.</span>
+            </div>
+            <button class="settings-action" onclick="leaveHousehold()">Verlassen</button>
+        </div>
+
+        <div class="settings-card danger-card">
+            <div class="settings-info">
+                <strong>Haushalt löschen</strong>
+                <span>Nur der Besitzer kann den gemeinsamen Haushalt löschen.</span>
+            </div>
+            <button class="settings-danger" onclick="deleteHousehold()">Haushalt löschen</button>
+        </div>
+
+    </div>
+
+
+    <!-- KONTO -->
+
+    <div class="settings-section">
+
+        <h2>
+            👤 Konto
+        </h2>
+
+        <div class="settings-card">
+            <div class="settings-info">
+                <strong id="account-email">Angemeldet</strong>
+                <span>Dein HomeHub-Konto und deine Cloud-Daten.</span>
+            </div>
+
+            <button class="settings-action" onclick="logout()">
+                Abmelden
+            </button>
+        </div>
+
+        <div class="settings-card danger-card">
+            <div class="settings-info">
+                <strong>Konto endgültig löschen</strong>
+                <span>Löscht dein Konto und alle zugehörigen HomeHub-Daten aus Supabase.</span>
+            </div>
+
+            <button class="settings-danger" onclick="deleteAccount()">
+                Konto löschen
+            </button>
+        </div>
+
+    </div>
+
+
     <!-- ÜBER -->
 
     <div class="settings-section">
@@ -987,5 +1076,31 @@
 <script src="script.js"></script>
 
 
+
+<!-- HOMeHUB CUSTOM DIALOGS -->
+<div id="homehub-modal" class="homehub-modal" aria-hidden="true">
+    <div class="homehub-modal-backdrop" data-modal-close></div>
+    <div class="homehub-modal-card" role="dialog" aria-modal="true" aria-labelledby="homehub-modal-title">
+        <div class="homehub-modal-icon" id="homehub-modal-icon">🏠</div>
+        <h2 id="homehub-modal-title">HomeHub</h2>
+        <p id="homehub-modal-message"></p>
+        <input id="homehub-modal-input" class="homehub-modal-input" type="text" autocomplete="off" style="display:none;">
+        <div class="homehub-modal-actions">
+            <button id="homehub-modal-cancel" class="homehub-modal-button secondary" style="display:none;">Abbrechen</button>
+            <button id="homehub-modal-ok" class="homehub-modal-button primary">OK</button>
+        </div>
+    </div>
+</div>
+
+
+<script>
+if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js").catch((error) => {
+            console.warn("HomeHub Service Worker konnte nicht registriert werden:", error);
+        });
+    });
+}
+</script>
 </body>
 </html>
