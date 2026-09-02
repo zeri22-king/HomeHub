@@ -75,7 +75,7 @@ async function developerCopyDiagnostics() {
     developerUpdateOverview();
     const text = [
       "HomeHub Developer Diagnostics",
-      "App: v17",
+      "App: v18",
       "Account: " + (window.__homeHubDeveloperEmail || "n.zerlauth@gmx.at"),
       "Haushalt: " + (currentHousehold?.name || "—"),
       "Haushalt-ID: " + (currentHousehold?.id || "—"),
@@ -523,17 +523,11 @@ function subscribeToCloud(householdId) {
 }
 
 async function ensureHomeHubHousehold() {
-    const { data, error } = await supabaseClient.rpc("ensure_my_household");
-    if (error) {
-        console.error("HomeHub-Haushalt konnte nicht sichergestellt werden:", error);
-        return null;
-    }
-    if (data) {
-        currentHousehold = data.household || null;
-        currentMembership = data.membership || null;
-        updateHouseholdUI();
-    }
-    return currentHousehold;
+    // Wichtig: Beim Login wird KEIN Haushalt automatisch erstellt.
+    // Es wird ausschließlich geprüft, ob der Benutzer bereits Mitglied
+    // eines Haushalts ist. Einen neuen Haushalt kann er nur über
+    // "Haushalt erstellen" selbst anlegen.
+    return await getCurrentHousehold();
 }
 
 async function loadCloudData(forceReload) {
