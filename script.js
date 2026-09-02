@@ -11,11 +11,10 @@ function updateDeveloperAccessUI(allowed, user) {
     const more = document.getElementById("developer-more-menu-item");
     const page = document.getElementById("developer");
     const emailEl = document.getElementById("developer-account-email");
+
     if (nav) nav.classList.toggle("developer-visible", developerAccess);
     if (more) more.classList.toggle("developer-visible", developerAccess);
     if (emailEl) emailEl.textContent = user?.email || "—";
-    const shortEl = document.getElementById("developer-account-short");
-    if (shortEl) shortEl.textContent = user?.email ? "Entwickler-Account" : "—";
     if (!developerAccess && page) page.classList.remove("active");
     return developerAccess;
 }
@@ -23,27 +22,23 @@ function updateDeveloperAccessUI(allowed, user) {
 async function updateDeveloperAccess(user) {
     if (!user) return updateDeveloperAccessUI(false, null);
 
-    // Der Entwickler-Account wird anhand der E-Mail eindeutig erkannt.
-    // Zusätzlich darf die Supabase-Tabelle den Zugriff bestätigen.
-    const isDeveloperEmail = String(user.email || "").trim().toLowerCase() === DEVELOPER_EMAIL;
-    if (isDeveloperEmail) {
-        return updateDeveloperAccessUI(true, user);
-    }
-
     try {
         const { data, error } = await supabaseClient.rpc("is_homehub_developer");
         if (!error && data === true) {
             return updateDeveloperAccessUI(true, user);
         }
     } catch (error) {
-        console.warn("Entwicklerstatus konnte nicht über Supabase geprüft werden:", error);
+        console.warn("Entwicklerstatus konnte nicht geprüft werden:", error);
     }
 
-    return updateDeveloperAccessUI(false, user);
+    // Fallback für den eigenen Entwickler-Account, falls die RPC-Funktion noch fehlt.
+    const allowedByEmail = String(user.email || "").trim().toLowerCase() === DEVELOPER_EMAIL;
+    return updateDeveloperAccessUI(allowedByEmail, user);
 }
 
 function developerReloadHomeHub() {
     if (!developerAccess) return;
+    cloudLoaded = false;
     loadCloudData(true);
 }
 
@@ -55,7 +50,6 @@ async function developerCheckCloud() {
         "Cloud-Status"
     );
 }
-
 
 // =================================
 // HOMeHUB DIALOGE
@@ -355,26 +349,22 @@ async function copyHouseholdCode() {
     }
 }
 
-function subscribeToCloud(userId) {
-    if (!userId) return;
+function subscribeToCloud(householdId) {
+    if (!householdId) return;
     if (cloudChannel) {
         supabaseClient.removeChannel(cloudChannel);
         cloudChannel = null;
     }
 
-    const householdId = currentHousehold?.id || null;
-    const filterColumn = householdId ? "household_id" : "user_id";
-    const filterValue = householdId || userId;
-
     cloudChannel = supabaseClient
-        .channel("homehub-sync-" + filterColumn + "-" + filterValue)
+        .channel("homehub-household-" + householdId)
         .on(
             "postgres_changes",
             {
                 event: "*",
                 schema: "public",
                 table: "homehub_data",
-                filter: filterColumn + "=eq." + filterValue
+                filter: "household_id=eq." + householdId
             },
             function(payload) {
                 if (payload.eventType === "DELETE") {
@@ -386,11 +376,25 @@ function subscribeToCloud(userId) {
                 if (payload.new && payload.new.data) {
                     applyHomeHubCloudData(payload.new.data);
                     refreshHomeHubUI();
-                    setCloudStatus("Mit Cloud synchronisiert", true);
+                    setCloudStatus("Mit Haushalt synchronisiert", true);
                 }
             }
         )
         .subscribe();
+}
+
+async function ensureHomeHubHousehold() {
+    const { data, error } = await supabaseClient.rpc("ensure_my_household");
+    if (error) {
+        console.error("HomeHub-Haushalt konnte nicht sichergestellt werden:", error);
+        return null;
+    }
+    if (data) {
+        currentHousehold = data.household || null;
+        currentMembership = data.membership || null;
+        updateHouseholdUI();
+    }
+    return currentHousehold;
 }
 
 async function loadCloudData(forceReload) {
@@ -405,23 +409,15 @@ async function loadCloudData(forceReload) {
             return false;
         }
 
-        const userId = session.user.id;
-        try { await getCurrentHousehold(); } catch (error) {
-            console.warn("Haushalt konnte beim Cloud-Start nicht geladen werden:", error);
+        const household = await ensureHomeHubHousehold();
+        if (!household) {
+            setCloudStatus("Haushalt konnte nicht geladen werden", false);
+            return false;
         }
 
-        const householdId = currentHousehold?.id || null;
-        let query = supabaseClient
-            .from("homehub_data")
-            .select("id, user_id, household_id, data, updated_at");
-
-        query = householdId
-            ? query.eq("household_id", householdId)
-            : query.eq("user_id", userId).is("household_id", null);
-
-        const { data: rows, error } = await query
-            .order("updated_at", { ascending: false })
-            .limit(1);
+        const { data, error } = await supabaseClient.rpc("get_homehub_data", {
+            p_household_id: household.id
+        });
 
         if (error) {
             console.error("HomeHub Cloud laden fehlgeschlagen:", error);
@@ -429,26 +425,28 @@ async function loadCloudData(forceReload) {
             return false;
         }
 
-        const cloudRow = rows && rows.length ? rows[0] : null;
-        if (cloudRow && cloudRow.data) {
-            applyHomeHubCloudData(cloudRow.data);
+        if (data && typeof data === "object") {
+            applyHomeHubCloudData(data);
         } else {
-            // Nur beim allerersten Laden werden vorhandene lokale Daten übernommen.
-            // Danach ist die Cloud die führende Quelle.
+            // Noch kein Datensatz: vorhandene lokale Daten einmalig sicher über die RPC speichern.
             const localData = getHomeHubCloudData();
             if (Object.keys(localData).length) {
-                const saved = await saveCloudDataDirect(userId, householdId, localData);
-                if (!saved) {
-                    setCloudStatus("Cloud-Speicherung fehlgeschlagen", false);
+                const { error: saveError } = await supabaseClient.rpc("save_homehub_data", {
+                    p_household_id: household.id,
+                    p_data: localData
+                });
+                if (saveError) {
+                    console.error("Lokale HomeHub-Daten konnten nicht übernommen werden:", saveError);
+                    setCloudStatus("Cloud-Fehler", false);
                     return false;
                 }
             }
         }
 
         cloudLoaded = true;
-        subscribeToCloud(userId);
+        subscribeToCloud(household.id);
         refreshHomeHubUI();
-        setCloudStatus("Mit Cloud synchronisiert", true);
+        setCloudStatus("Mit Haushalt synchronisiert", true);
         return true;
     })();
 
@@ -456,89 +454,23 @@ async function loadCloudData(forceReload) {
     finally { cloudLoadPromise = null; }
 }
 
-// Speichert ohne upsert/onConflict. Das ist wichtig, weil ein gemeinsamer
-// Haushaltsdatensatz von mehreren Benutzern geschrieben werden kann.
-async function saveCloudDataDirect(userId, householdId, cloudData) {
-    const filter = householdId
-        ? { household_id: householdId }
-        : { user_id: userId, household_id: null };
-
-    let query = supabaseClient
-        .from("homehub_data")
-        .select("id")
-        .limit(1);
-
-    query = householdId
-        ? query.eq("household_id", householdId)
-        : query.eq("user_id", userId).is("household_id", null);
-
-    const { data: existing, error: findError } = await query;
-    if (findError) {
-        console.error("HomeHub Cloud-Datensatz konnte nicht gefunden werden:", findError);
-        return false;
-    }
-
-    const payload = {
-        user_id: userId,
-        data: cloudData,
-        updated_at: new Date().toISOString()
-    };
-    if (householdId) payload.household_id = householdId;
-
-    if (existing && existing.length) {
-        const { error } = await supabaseClient
-            .from("homehub_data")
-            .update(payload)
-            .eq("id", existing[0].id);
-        if (error) {
-            console.error("HomeHub Cloud-Update fehlgeschlagen:", error);
-            return false;
-        }
-        return true;
-    }
-
-    const { error: insertError } = await supabaseClient
-        .from("homehub_data")
-        .insert(payload);
-
-    if (!insertError) return true;
-
-    // Falls Handy und PC exakt gleichzeitig den ersten Datensatz anlegen,
-    // kann einer der beiden Inserts wegen UNIQUE scheitern. Danach einfach
-    // den inzwischen vorhandenen Datensatz aktualisieren.
-    const { data: raceRows } = await (householdId
-        ? supabaseClient.from("homehub_data").select("id").eq("household_id", householdId).limit(1)
-        : supabaseClient.from("homehub_data").select("id").eq("user_id", userId).is("household_id", null).limit(1));
-
-    if (raceRows && raceRows.length) {
-        const { error: raceUpdateError } = await supabaseClient
-            .from("homehub_data")
-            .update(payload)
-            .eq("id", raceRows[0].id);
-        if (!raceUpdateError) return true;
-    }
-
-    console.error("HomeHub Cloud-Insert fehlgeschlagen:", insertError);
-    return false;
-}
-
 function queueCloudSave() {
     cloudSaveQueue = cloudSaveQueue
         .catch(function() {})
         .then(async function() {
-            if (!cloudLoaded) return;
-
+            if (!cloudLoaded || !currentHousehold) return;
             const { data: sessionData } = await supabaseClient.auth.getSession();
             const session = sessionData && sessionData.session;
             if (!session) return;
 
-            const userId = session.user.id;
-            const cloudData = getHomeHubCloudData();
-            const householdId = currentHousehold?.id || null;
-            const saved = await saveCloudDataDirect(userId, householdId, cloudData);
+            const payload = getHomeHubCloudData();
+            const { error } = await supabaseClient.rpc("save_homehub_data", {
+                p_household_id: currentHousehold.id,
+                p_data: payload
+            });
 
-            if (!saved) throw new Error("Cloud-Speicherung fehlgeschlagen");
-            setCloudStatus("Mit Cloud synchronisiert", true);
+            if (error) throw error;
+            setCloudStatus("Mit Haushalt synchronisiert", true);
         })
         .catch(function(error) {
             console.error("HomeHub Cloud-Speicherung fehlgeschlagen:", error);
@@ -707,7 +639,6 @@ async function checkLogin() {
         loginScreen.style.display = "none";
         updateAccountUI(session);
         await updateDeveloperAccess(session.user);
-        await getCurrentHousehold();
         await loadCloudData();
     } else {
         loginScreen.style.display = "flex";
@@ -2446,10 +2377,17 @@ async function clearHomeHubData() {
     const session = sessionData && sessionData.session;
 
     if (session) {
+        if (!currentHousehold) {
+            clearHomeHubCache();
+            refreshHomeHubUI();
+            await showHomeHubAlert("Du bist keinem Haushalt zugeordnet.");
+            return;
+        }
+
         const { error } = await supabaseClient
             .from("homehub_data")
             .delete()
-            .eq("user_id", session.user.id);
+            .eq("household_id", currentHousehold.id);
 
         if (error) {
             console.error("Cloud-Daten konnten nicht gelöscht werden:", error);
@@ -3615,3 +3553,19 @@ setInterval(checkCalendarReminders, 30000);
 checkCalendarReminders();
 
 
+// Developer-/Cloud-Status bei jeder Auth-Änderung aktualisieren.
+if (typeof supabaseClient !== "undefined" && supabaseClient?.auth) {
+    supabaseClient.auth.onAuthStateChange((_event, session) => {
+        if (!session) {
+            developerAccess = false;
+            updateDeveloperAccessUI(false, null);
+            if (cloudChannel) { supabaseClient.removeChannel(cloudChannel); cloudChannel = null; }
+            cloudLoaded = false;
+            currentHousehold = null;
+            currentMembership = null;
+            clearHomeHubCache();
+            return;
+        }
+        updateDeveloperAccess(session.user);
+    });
+}

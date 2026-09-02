@@ -5,10 +5,10 @@
 <link rel="icon" type="image/png" href="icon.png">
 <meta name="theme-color" content="#111827">
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HomeHub</title>
 
-    <link rel="stylesheet" href="style.css?v=8">
+    <link rel="stylesheet" href="style.css?v=9">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
@@ -73,6 +73,15 @@
         <nav>
 
             <button
+                id="developer-nav-button"
+                class="nav-button developer-nav-button"
+                onclick="showPage('developer')"
+            >
+                <span>🛠️</span>
+                Entwickler
+            </button>
+
+            <button
                 class="nav-button active-nav"
                 onclick="showPage('home')"
             >
@@ -121,16 +130,6 @@
 </button>
 
 <button
-    id="developer-nav-button"
-    class="nav-button developer-nav-button desktop-only-nav"
-    onclick="showPage('developer')"
-    aria-hidden="true"
->
-    <span>🛠️</span>
-    Entwickler
-</button>
-
-<button
     class="nav-button desktop-only-nav"
     onclick="showPage('settings')"
 >
@@ -166,7 +165,7 @@
                 </div>
             </button>
 
-            <button id="developer-more-menu-item" class="more-menu-item developer-more-menu-item" onclick="showPage('developer')" aria-hidden="true">
+            <button id="developer-more-menu-item" class="more-menu-item developer-more-menu-item" onclick="showPage('developer')">
                 <span>🛠️</span>
                 <div>
                     <strong>Entwickler</strong>
@@ -208,78 +207,45 @@
     <main>
 
         <section id="developer" class="page developer-page">
-            <div class="developer-hero">
-                <div class="developer-hero-main">
-                    <div class="developer-kicker"><span class="developer-live-dot"></span> DEVELOPER MODE</div>
-                    <h1>Entwicklerbereich</h1>
-                    <p>Deine internen HomeHub-Werkzeuge – übersichtlich an einem Ort.</p>
-                </div>
-                <div class="developer-hero-mark">🛠️</div>
-            </div>
-
-            <div class="developer-overview">
-                <div class="developer-overview-item">
-                    <span class="developer-overview-icon">🔐</span>
-                    <div><small>Zugriff</small><strong>Berechtigt</strong></div>
-                </div>
-                <div class="developer-overview-item">
-                    <span class="developer-overview-icon">☁️</span>
-                    <div><small>Cloud</small><strong>Supabase</strong></div>
-                </div>
-                <div class="developer-overview-item">
-                    <span class="developer-overview-icon">👤</span>
-                    <div><small>Account</small><strong id="developer-account-short">Entwickler</strong></div>
-                </div>
-            </div>
-
-            <div class="developer-section-title">
+            <div class="page-header">
                 <div>
-                    <span class="developer-section-kicker">KONTROLLE</span>
-                    <h2>Entwickler-Werkzeuge</h2>
+                    <div class="eyebrow">DEVELOPER MODE</div>
+                    <h1>Entwickler</h1>
+                    <p class="subtitle">Interne HomeHub-Werkzeuge – nur für den Entwickler-Account.</p>
                 </div>
-                <span class="developer-section-count">Nur für dich</span>
+                <div class="developer-badge">🛠️ Entwickler</div>
             </div>
 
-            <div class="developer-tools-grid">
-                <article class="developer-tool-card developer-tool-access">
-                    <div class="developer-tool-top">
-                        <div class="developer-tool-icon">🔐</div>
-                        <span class="developer-status modern">● Aktiv</span>
+            <div class="developer-grid">
+                <div class="developer-card">
+                    <div class="developer-card-icon">🔐</div>
+                    <div>
+                        <h2>Developer-Zugriff</h2>
+                        <p>Angemeldet als <strong>n.zerlauth@gmx.at</strong></p>
+                        <span class="developer-status">● Berechtigt</span>
                     </div>
-                    <h3>Developer-Zugriff</h3>
-                    <p>Dieser Bereich ist mit deinem Entwickler-Account verbunden.</p>
-                    <div class="developer-account-box">
-                        <span>Angemeldet als</span>
-                        <strong id="developer-account-email">n.zerlauth@gmx.at</strong>
-                    </div>
-                </article>
+                </div>
 
-                <article class="developer-tool-card developer-tool-cloud">
-                    <div class="developer-tool-top">
-                        <div class="developer-tool-icon">☁️</div>
-                        <span class="developer-cloud-pill"><span class="developer-live-dot"></span> Cloud</span>
+                <div class="developer-card">
+                    <div class="developer-card-icon">☁️</div>
+                    <div>
+                        <h2>Supabase</h2>
+                        <p>Der bestehende Datenbank- und Authentifizierungsbereich bleibt unverändert.</p>
                     </div>
-                    <h3>Cloud & Synchronisation</h3>
-                    <p>Prüfe die Verbindung oder lade die aktuellen HomeHub-Daten neu.</p>
-                    <div class="developer-actions">
-                        <button class="developer-action secondary" onclick="developerCheckCloud()">Verbindung prüfen</button>
-                        <button class="developer-action primary" onclick="developerReloadHomeHub()">Daten neu laden</button>
-                    </div>
-                </article>
+                </div>
 
-                <article class="developer-tool-card developer-tool-info">
-                    <div class="developer-tool-top">
-                        <div class="developer-tool-icon">🧪</div>
-                        <span class="developer-info-pill">Intern</span>
+                <div class="developer-card developer-card-wide">
+                    <div class="developer-card-icon">🧪</div>
+                    <div>
+                        <h2>Entwicklerbereich</h2>
+                        <p>Hier können später sichere Admin- und Testwerkzeuge ergänzt werden.</p>
+                        <div class="developer-note">Der Bereich ist für normale Benutzer nicht sichtbar.</div>
                     </div>
-                    <h3>Entwicklerbereich</h3>
-                    <p>Hier können später weitere sichere Test-, Diagnose- und Admin-Werkzeuge ergänzt werden.</p>
-                    <div class="developer-note-modern">
-                        <span>✓</span> Normale Benutzer sehen diesen Bereich nicht.
-                    </div>
-                </article>
+                </div>
             </div>
         </section>
+
+
 
 
         <!-- =========================
@@ -1114,7 +1080,7 @@
 
 </main>
 
-<script src="script.js?v=8"></script>
+<script src="script.js?v=4"></script>
 
 
 
