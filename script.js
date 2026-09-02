@@ -75,7 +75,7 @@ async function developerCopyDiagnostics() {
     developerUpdateOverview();
     const text = [
       "HomeHub Developer Diagnostics",
-      "App: v18",
+      "App: v21",
       "Account: " + (window.__homeHubDeveloperEmail || "n.zerlauth@gmx.at"),
       "Haushalt: " + (currentHousehold?.name || "—"),
       "Haushalt-ID: " + (currentHousehold?.id || "—"),
@@ -871,18 +871,20 @@ function showPage(pageId) {
 }
 
 
-function toggleMoreMenu() {
+function toggleMoreMenu(event) {
+
+    if (event) event.stopPropagation();
 
     const menu = document.getElementById("moreMenu");
     const button = document.getElementById("moreNavButton");
 
-    if (!menu || !button) {
-        return;
-    }
+    if (!menu || !button) return;
 
-    const isOpen = menu.classList.toggle("show");
-
+    const isOpen = !menu.classList.contains("show");
+    menu.classList.toggle("show", isOpen);
     button.classList.toggle("menu-open", isOpen);
+    button.setAttribute("aria-expanded", isOpen ? "true" : "false");
+    menu.setAttribute("aria-hidden", isOpen ? "false" : "true");
 }
 
 
@@ -897,7 +899,9 @@ function closeMoreMenu() {
 
     if (button) {
         button.classList.remove("menu-open");
+        button.setAttribute("aria-expanded", "false");
     }
+    if (menu) menu.setAttribute("aria-hidden", "true");
 }
 
 
@@ -906,17 +910,15 @@ document.addEventListener("click", function(event) {
     const menu = document.getElementById("moreMenu");
     const button = document.getElementById("moreNavButton");
 
-    if (!menu || !button) {
-        return;
-    }
+    if (!menu || !button) return;
 
-    if (
-        menu.classList.contains("show") &&
-        !menu.contains(event.target) &&
-        !button.contains(event.target)
-    ) {
+    if (menu.classList.contains("show") && !menu.contains(event.target) && !button.contains(event.target)) {
         closeMoreMenu();
     }
+});
+
+document.addEventListener("keydown", function(event) {
+    if (event.key === "Escape") closeMoreMenu();
 });
 
 

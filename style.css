@@ -75,3 +75,55 @@ body.dark-mode .developer-data-row{background:#0b1322}.developer-data-row code{b
   .home-widgets{grid-template-columns:1fr 1fr;}
   .home-widget{min-height:118px;padding:15px;}
 }
+
+/* v21 – stabile mobile Navigation + Entwickler-Icons wieder deutlich sichtbar */
+.more-menu {
+    z-index: 8000;
+    pointer-events: auto;
+}
+.more-menu.show {
+    display: block !important;
+    visibility: visible;
+    opacity: 1;
+}
+.more-nav-button {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+.developer-stat-icon {
+    width: 52px;
+    height: 52px;
+    min-width: 52px;
+    border-radius: 15px;
+    font-size: 25px;
+}
+.developer-tool-card > span {
+    width: 52px;
+    height: 52px;
+    min-width: 52px;
+    border-radius: 15px;
+    font-size: 25px;
+}
+@media(max-width:820px){
+    .sidebar { z-index: 7500; }
+    .more-menu {
+        z-index: 8000;
+        bottom: calc(82px + env(safe-area-inset-bottom));
+    }
+    .developer-stat-icon {
+        width: 50px; height: 50px; min-width: 50px; font-size: 24px;
+    }
+    .developer-tool-card > span {
+        width: 50px; height: 50px; min-width: 50px; font-size: 24px;
+    }
+}
+@media(max-width:560px){
+    .home-widgets {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 12px;
+    }
+    .home-widget {
+        min-height: 118px;
+        padding: 16px;
+    }
+}
