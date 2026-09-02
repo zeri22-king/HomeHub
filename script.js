@@ -17,7 +17,7 @@ function updateDeveloperAccessUI(allowed, user) {
     if (emailEl) emailEl.textContent = user?.email || "—";
     window.__homeHubDeveloperEmail = user?.email || "";
     if (!developerAccess && page) page.classList.remove("active");
-    if (developerAccess) setTimeout(developerUpdateOverview, 0);
+    if (developerAccess) setTimeout(function(){ developerUpdateOverview(); developerLoadManagement(); }, 0);
     return developerAccess;
 }
 
@@ -62,7 +62,7 @@ function developerUpdateOverview() {
 
 async function developerRefreshDiagnostics() {
     if (!developerAccess) return;
-    const ok = await loadCloudData(true);
+    const ok = await developerRunFullDiagnostics();
     const now = new Date().toLocaleString("de-AT");
     const e=document.getElementById("developer-last-sync"); if(e) e.textContent = ok ? now : "Cloud-Fehler";
     const c=document.getElementById("developer-cloud-status"); if(c) c.textContent = ok ? "Online" : "Fehler";
@@ -75,7 +75,7 @@ async function developerCopyDiagnostics() {
     developerUpdateOverview();
     const text = [
       "HomeHub Developer Diagnostics",
-      "App: v15",
+      "App: v17",
       "Account: " + (window.__homeHubDeveloperEmail || "n.zerlauth@gmx.at"),
       "Haushalt: " + (currentHousehold?.name || "—"),
       "Haushalt-ID: " + (currentHousehold?.id || "—"),
@@ -99,6 +99,95 @@ async function developerCheckCloud() {
         ok ? "Die HomeHub-Cloud-Verbindung funktioniert." : "Die HomeHub-Cloud-Verbindung konnte nicht geprüft werden.",
         "Cloud-Status"
     );
+}
+
+
+// =================================
+// DEVELOPER MANAGEMENT & DIAGNOSTICS
+// =================================
+async function developerLoadManagement() {
+    if (!developerAccess) return;
+    const membersEl = document.getElementById("developer-members-list");
+    const householdsEl = document.getElementById("developer-households-list");
+    if (membersEl) membersEl.innerHTML = '<div class="developer-loading">Lade Benutzer…</div>';
+    if (householdsEl) householdsEl.innerHTML = '<div class="developer-loading">Lade Haushalte…</div>';
+
+    const [membersResult, householdsResult] = await Promise.all([
+        supabaseClient.rpc("developer_list_members", { p_household_id: currentHousehold?.id || null }),
+        supabaseClient.rpc("developer_list_households")
+    ]);
+
+    if (membersResult.error) {
+        console.error("Developer members:", membersResult.error);
+        if (membersEl) membersEl.innerHTML = '<div class="developer-error">Benutzer konnten nicht geladen werden.<br><small>' + escapeHtml(membersResult.error.message) + '</small></div>';
+    } else {
+        renderDeveloperMembers(Array.isArray(membersResult.data) ? membersResult.data : []);
+    }
+
+    if (householdsResult.error) {
+        console.error("Developer households:", householdsResult.error);
+        if (householdsEl) householdsEl.innerHTML = '<div class="developer-error">Haushalte konnten nicht geladen werden.<br><small>' + escapeHtml(householdsResult.error.message) + '</small></div>';
+    } else {
+        renderDeveloperHouseholds(Array.isArray(householdsResult.data) ? householdsResult.data : []);
+    }
+}
+
+function escapeHtml(value) {
+    return String(value ?? "").replace(/[&<>'"]/g, function(ch) {
+        return ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"})[ch];
+    });
+}
+
+function renderDeveloperMembers(items) {
+    const el = document.getElementById("developer-members-list");
+    const count = document.getElementById("developer-member-count");
+    if (count) count.textContent = String(items.length);
+    if (!el) return;
+    if (!items.length) { el.innerHTML = '<div class="developer-empty">Keine Mitglieder gefunden.</div>'; return; }
+    el.innerHTML = items.map(function(item) {
+        const initial = escapeHtml((item.email || "?").charAt(0).toUpperCase());
+        const role = item.role === "owner" ? "Besitzer" : "Mitglied";
+        const joined = item.joined_at ? new Date(item.joined_at).toLocaleDateString("de-AT") : "—";
+        return '<div class="developer-data-row"><div class="developer-avatar">'+initial+'</div><div class="developer-data-main"><strong>'+escapeHtml(item.email || "Unbekannter Account")+'</strong><small>'+role+' · beigetreten '+joined+'</small></div><code>'+escapeHtml(String(item.user_id || "").slice(0,8))+'…</code></div>';
+    }).join("");
+}
+
+function renderDeveloperHouseholds(items) {
+    const el = document.getElementById("developer-households-list");
+    const count = document.getElementById("developer-household-count");
+    if (count) count.textContent = String(items.length);
+    if (!el) return;
+    if (!items.length) { el.innerHTML = '<div class="developer-empty">Keine Haushalte gefunden.</div>'; return; }
+    el.innerHTML = items.map(function(item) {
+        const mine = currentHousehold && item.id === currentHousehold.id;
+        const created = item.created_at ? new Date(item.created_at).toLocaleDateString("de-AT") : "—";
+        return '<div class="developer-data-row household-row"><div class="developer-avatar">🏠</div><div class="developer-data-main"><strong>'+escapeHtml(item.name || "Ohne Namen")+(mine ? ' <span class="developer-mini-badge">AKTUELL</span>' : '')+'</strong><small>'+Number(item.member_count || 0)+' Mitglied(er) · erstellt '+created+'</small></div><code>'+escapeHtml(String(item.id || "").slice(0,8))+'…</code></div>';
+    }).join("");
+}
+
+async function developerRunFullDiagnostics() {
+    if (!developerAccess) return;
+    const summary = document.getElementById("developer-diagnostics-summary");
+    if (summary) summary.innerHTML = '<div class="developer-diagnostic-state neutral"><span>●</span><div><strong>Diagnose läuft…</strong><small>Supabase, Session, Haushalt und Daten werden geprüft.</small></div></div>';
+    const result = await supabaseClient.rpc("developer_diagnostics", { p_household_id: currentHousehold?.id || null });
+    if (result.error) {
+        console.error("Developer diagnostics:", result.error);
+        if (summary) summary.innerHTML = '<div class="developer-diagnostic-state error"><span>!</span><div><strong>Diagnose fehlgeschlagen</strong><small>'+escapeHtml(result.error.message)+'</small></div></div>';
+        return false;
+    }
+    const d = result.data || {};
+    const set = (id, value) => { const e=document.getElementById(id); if(e) e.textContent=value; };
+    set("diag-session", d.session_ok ? "OK" : "Fehler");
+    set("diag-cloud", d.cloud_data_exists ? "Vorhanden" : "Leer");
+    set("diag-household", d.household_found ? "OK" : "Fehlt");
+    set("diag-members", String(d.member_count ?? 0));
+    set("diag-updated", d.data_updated_at ? new Date(d.data_updated_at).toLocaleString("de-AT") : "Noch keine Daten");
+    set("diag-realtime", "Aktiv");
+    const ok = !!d.session_ok && !!d.household_found && d.cloud_read_ok !== false;
+    if (summary) summary.innerHTML = '<div class="developer-diagnostic-state '+(ok ? 'success' : 'error')+'"><span>'+(ok ? '✓' : '!')+'</span><div><strong>'+(ok ? 'Systemprüfung erfolgreich' : 'Probleme gefunden')+'</strong><small>'+escapeHtml(d.message || (ok ? 'Die wichtigsten HomeHub-Dienste sind erreichbar.' : 'Bitte die einzelnen Diagnosewerte prüfen.'))+'</small></div></div>';
+    const last = document.getElementById("developer-last-sync"); if(last) last.textContent = new Date().toLocaleString("de-AT");
+    const cloud = document.getElementById("developer-cloud-status"); if(cloud) cloud.textContent = ok ? "Online" : "Prüfen";
+    return ok;
 }
 
 // =================================

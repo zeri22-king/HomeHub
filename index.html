@@ -232,18 +232,39 @@
 
   <div class="developer-section-title"><div><div class="eyebrow">DATEN</div><h2>Aktueller Zustand</h2></div></div>
   <div class="developer-panel">
-    <div class="developer-row"><span>App-Version</span><strong id="developer-app-version">v11</strong></div>
+    <div class="developer-row"><span>App-Version</span><strong id="developer-app-version">v17</strong></div>
     <div class="developer-row"><span>Browser</span><strong id="developer-browser">—</strong></div>
     <div class="developer-row"><span>Authentifizierung</span><strong id="developer-auth-status">—</strong></div>
     <div class="developer-row"><span>Haushalt synchronisiert</span><strong id="developer-household-status">—</strong></div>
   </div>
 
-  <div class="developer-section-title"><div><div class="eyebrow">NÄCHSTE SCHRITTE</div><h2>Entwicklerfunktionen</h2></div></div>
-  <div class="developer-coming-grid">
-    <div><span>👥</span><strong>Benutzerverwaltung</strong><small>Haushaltsmitglieder und Rollen</small></div>
-    <div><span>🏠</span><strong>Haushaltsverwaltung</strong><small>Haushalte und Beitrittscodes</small></div>
-    <div><span>🐛</span><strong>Fehlerdiagnose</strong><small>Sync- und Auth-Probleme schneller finden</small></div>
+  <div class="developer-section-title"><div><div class="eyebrow">VERWALTUNG</div><h2>Benutzer & Haushalte</h2></div><button class="secondary-button developer-refresh-button" onclick="developerLoadManagement()">↻ Aktualisieren</button></div>
+  <div class="developer-management-grid">
+    <section class="developer-management-card">
+      <div class="developer-card-heading"><div><span class="developer-card-icon">👥</span><div><strong>Benutzerverwaltung</strong><small>Accounts und Haushaltsrollen</small></div></div><span id="developer-member-count" class="developer-count-badge">—</span></div>
+      <div id="developer-members-list" class="developer-data-list"><div class="developer-empty">Noch keine Daten geladen.</div></div>
+    </section>
+    <section class="developer-management-card">
+      <div class="developer-card-heading"><div><span class="developer-card-icon">🏠</span><div><strong>Haushaltsverwaltung</strong><small>Haushalte und Mitglieder</small></div></div><span id="developer-household-count" class="developer-count-badge">—</span></div>
+      <div id="developer-households-list" class="developer-data-list"><div class="developer-empty">Noch keine Daten geladen.</div></div>
+    </section>
   </div>
+
+  <div class="developer-section-title"><div><div class="eyebrow">DIAGNOSE</div><h2>Fehlerdiagnose</h2></div></div>
+  <section class="developer-diagnostics-card">
+    <div class="developer-diagnostics-summary" id="developer-diagnostics-summary">
+      <div class="developer-diagnostic-state neutral"><span>●</span><div><strong>Bereit für Diagnose</strong><small>Starte eine Prüfung, um den aktuellen Systemzustand zu kontrollieren.</small></div></div>
+    </div>
+    <div class="developer-diagnostic-grid">
+      <div class="developer-diagnostic-item"><span>🔐</span><div><small>Session</small><strong id="diag-session">—</strong></div></div>
+      <div class="developer-diagnostic-item"><span>☁️</span><div><small>Cloud-Daten</small><strong id="diag-cloud">—</strong></div></div>
+      <div class="developer-diagnostic-item"><span>🏠</span><div><small>Haushalt</small><strong id="diag-household">—</strong></div></div>
+      <div class="developer-diagnostic-item"><span>👥</span><div><small>Mitglieder</small><strong id="diag-members">—</strong></div></div>
+      <div class="developer-diagnostic-item"><span>🕒</span><div><small>Letzte Änderung</small><strong id="diag-updated">—</strong></div></div>
+      <div class="developer-diagnostic-item"><span>📡</span><div><small>Realtime</small><strong id="diag-realtime">—</strong></div></div>
+    </div>
+    <div class="developer-diagnostics-actions"><button class="primary-button" onclick="developerRunFullDiagnostics()">🧪 Diagnose starten</button><button class="secondary-button" onclick="developerCopyDiagnostics()">📋 Bericht kopieren</button></div>
+  </section>
 </section>
 
 
