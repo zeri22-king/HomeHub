@@ -880,7 +880,7 @@ function toggleMoreMenu() {
         return;
     }
 
-    const isOpen = menu.classList.toggle("open");
+    const isOpen = menu.classList.toggle("show");
 
     button.classList.toggle("menu-open", isOpen);
 }
@@ -892,7 +892,7 @@ function closeMoreMenu() {
     const button = document.getElementById("moreNavButton");
 
     if (menu) {
-        menu.classList.remove("open");
+        menu.classList.remove("show");
     }
 
     if (button) {
@@ -911,7 +911,7 @@ document.addEventListener("click", function(event) {
     }
 
     if (
-        menu.classList.contains("open") &&
+        menu.classList.contains("show") &&
         !menu.contains(event.target) &&
         !button.contains(event.target)
     ) {
