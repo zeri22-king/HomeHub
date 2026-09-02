@@ -406,8 +406,6 @@ async function loadCloudData(forceReload) {
         }
 
         const userId = session.user.id;
-        // Beim Login zuerst den aktuellen Haushalt laden. Dadurch nutzen
-        // PC und Handy denselben Datensatz und nicht zwei getrennte Benutzer-Caches.
         try { await getCurrentHousehold(); } catch (error) {
             console.warn("Haushalt konnte beim Cloud-Start nicht geladen werden:", error);
         }
@@ -419,7 +417,7 @@ async function loadCloudData(forceReload) {
 
         query = householdId
             ? query.eq("household_id", householdId)
-            : query.eq("user_id", userId);
+            : query.eq("user_id", userId).is("household_id", null);
 
         const { data: rows, error } = await query
             .order("updated_at", { ascending: false })
@@ -435,24 +433,13 @@ async function loadCloudData(forceReload) {
         if (cloudRow && cloudRow.data) {
             applyHomeHubCloudData(cloudRow.data);
         } else {
-            // Erstes Gerät des Haushalts: vorhandene lokale Daten übernehmen.
+            // Nur beim allerersten Laden werden vorhandene lokale Daten übernommen.
+            // Danach ist die Cloud die führende Quelle.
             const localData = getHomeHubCloudData();
             if (Object.keys(localData).length) {
-                const payload = {
-                    user_id: userId,
-                    data: localData,
-                    updated_at: new Date().toISOString()
-                };
-                if (householdId) payload.household_id = householdId;
-
-                const conflictColumn = householdId ? "household_id" : "user_id";
-                const { error: insertError } = await supabaseClient
-                    .from("homehub_data")
-                    .upsert(payload, { onConflict: conflictColumn });
-
-                if (insertError) {
-                    console.error("Lokale HomeHub-Daten konnten nicht übernommen werden:", insertError);
-                    setCloudStatus("Cloud-Fehler", false);
+                const saved = await saveCloudDataDirect(userId, householdId, localData);
+                if (!saved) {
+                    setCloudStatus("Cloud-Speicherung fehlgeschlagen", false);
                     return false;
                 }
             }
@@ -469,6 +456,72 @@ async function loadCloudData(forceReload) {
     finally { cloudLoadPromise = null; }
 }
 
+// Speichert ohne upsert/onConflict. Das ist wichtig, weil ein gemeinsamer
+// Haushaltsdatensatz von mehreren Benutzern geschrieben werden kann.
+async function saveCloudDataDirect(userId, householdId, cloudData) {
+    const filter = householdId
+        ? { household_id: householdId }
+        : { user_id: userId, household_id: null };
+
+    let query = supabaseClient
+        .from("homehub_data")
+        .select("id")
+        .limit(1);
+
+    query = householdId
+        ? query.eq("household_id", householdId)
+        : query.eq("user_id", userId).is("household_id", null);
+
+    const { data: existing, error: findError } = await query;
+    if (findError) {
+        console.error("HomeHub Cloud-Datensatz konnte nicht gefunden werden:", findError);
+        return false;
+    }
+
+    const payload = {
+        user_id: userId,
+        data: cloudData,
+        updated_at: new Date().toISOString()
+    };
+    if (householdId) payload.household_id = householdId;
+
+    if (existing && existing.length) {
+        const { error } = await supabaseClient
+            .from("homehub_data")
+            .update(payload)
+            .eq("id", existing[0].id);
+        if (error) {
+            console.error("HomeHub Cloud-Update fehlgeschlagen:", error);
+            return false;
+        }
+        return true;
+    }
+
+    const { error: insertError } = await supabaseClient
+        .from("homehub_data")
+        .insert(payload);
+
+    if (!insertError) return true;
+
+    // Falls Handy und PC exakt gleichzeitig den ersten Datensatz anlegen,
+    // kann einer der beiden Inserts wegen UNIQUE scheitern. Danach einfach
+    // den inzwischen vorhandenen Datensatz aktualisieren.
+    const { data: raceRows } = await (householdId
+        ? supabaseClient.from("homehub_data").select("id").eq("household_id", householdId).limit(1)
+        : supabaseClient.from("homehub_data").select("id").eq("user_id", userId).is("household_id", null).limit(1));
+
+    if (raceRows && raceRows.length) {
+        const { error: raceUpdateError } = await supabaseClient
+            .from("homehub_data")
+            .update(payload)
+            .eq("id", raceRows[0].id);
+        if (!raceUpdateError) return true;
+    }
+
+    console.error("HomeHub Cloud-Insert fehlgeschlagen:", insertError);
+    return false;
+}
+
 function queueCloudSave() {
     cloudSaveQueue = cloudSaveQueue
         .catch(function() {})
@@ -482,22 +535,9 @@ function queueCloudSave() {
             const userId = session.user.id;
             const cloudData = getHomeHubCloudData();
             const householdId = currentHousehold?.id || null;
+            const saved = await saveCloudDataDirect(userId, householdId, cloudData);
 
-            const payload = {
-                user_id: userId,
-                data: cloudData,
-                updated_at: new Date().toISOString()
-            };
-            if (householdId) payload.household_id = householdId;
-
-            // Atomar speichern: verhindert den 409 duplicate-key Fehler,
-            // wenn Handy und PC nahezu gleichzeitig speichern.
-            const conflictColumn = householdId ? "household_id" : "user_id";
-            const { error } = await supabaseClient
-                .from("homehub_data")
-                .upsert(payload, { onConflict: conflictColumn });
-
-            if (error) throw error;
+            if (!saved) throw new Error("Cloud-Speicherung fehlgeschlagen");
             setCloudStatus("Mit Cloud synchronisiert", true);
         })
         .catch(function(error) {

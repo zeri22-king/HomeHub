@@ -1,5 +1,5 @@
-const CACHE_NAME = "homehub-v6";
-const APP_SHELL = ["./", "./index.html", "./style.css?v=5", "./script.js?v=5", "./manifest.json", "./icon.png"];
+const CACHE_NAME = "homehub-v8";
+const APP_SHELL = ["./", "./index.html", "./style.css?v=8", "./script.js?v=8", "./manifest.json", "./icon.png"];
 
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)).then(() => self.skipWaiting()));
