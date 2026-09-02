@@ -71,17 +71,7 @@
 </div>
 
         <nav>
-
-            <button
-                id="developer-nav-button"
-                class="nav-button developer-nav-button"
-                onclick="showPage('developer')"
-            >
-                <span>🛠️</span>
-                Entwickler
-            </button>
-
-            <button
+<button
                 class="nav-button active-nav"
                 onclick="showPage('home')"
             >
@@ -127,6 +117,15 @@
 >
     <span>📅</span>
     Kalender
+</button>
+
+<button
+    id="developer-nav-button"
+    class="nav-button developer-nav-button desktop-only-nav"
+    onclick="showPage('developer')"
+>
+    <span>🛠️</span>
+    Entwickler
 </button>
 
 <button
@@ -207,43 +206,45 @@
     <main>
 
         <section id="developer" class="page developer-page">
-            <div class="page-header">
-                <div>
-                    <div class="eyebrow">DEVELOPER MODE</div>
-                    <h1>Entwickler</h1>
-                    <p class="subtitle">Interne HomeHub-Werkzeuge – nur für den Entwickler-Account.</p>
-                </div>
-                <div class="developer-badge">🛠️ Entwickler</div>
-            </div>
+  <div class="developer-hero">
+    <div>
+      <div class="eyebrow">DEVELOPER MODE</div>
+      <h1>Entwicklerzentrale</h1>
+      <p class="subtitle">Interne Werkzeuge für die Weiterentwicklung von HomeHub.</p>
+    </div>
+    <div class="developer-badge">🛠️ Nur Entwickler</div>
+  </div>
 
-            <div class="developer-grid">
-                <div class="developer-card">
-                    <div class="developer-card-icon">🔐</div>
-                    <div>
-                        <h2>Developer-Zugriff</h2>
-                        <p>Angemeldet als <strong>n.zerlauth@gmx.at</strong></p>
-                        <span class="developer-status">● Berechtigt</span>
-                    </div>
-                </div>
+  <div class="developer-overview-grid">
+    <div class="developer-stat-card"><span class="developer-stat-icon">🔐</span><div><small>Zugriff</small><strong id="developer-access-status">Berechtigt</strong><span id="developer-account-email">—</span></div></div>
+    <div class="developer-stat-card"><span class="developer-stat-icon">☁️</span><div><small>Cloud</small><strong id="developer-cloud-status">Bereit</strong><span id="developer-last-sync">Noch kein Test</span></div></div>
+    <div class="developer-stat-card"><span class="developer-stat-icon">🏠</span><div><small>Haushalt</small><strong id="developer-household-name">—</strong><span id="developer-household-id">—</span></div></div>
+    <div class="developer-stat-card"><span class="developer-stat-icon">📦</span><div><small>Lokale Daten</small><strong id="developer-data-size">—</strong><span>Cloud-Payload im aktuellen Zustand</span></div></div>
+  </div>
 
-                <div class="developer-card">
-                    <div class="developer-card-icon">☁️</div>
-                    <div>
-                        <h2>Supabase</h2>
-                        <p>Der bestehende Datenbank- und Authentifizierungsbereich bleibt unverändert.</p>
-                    </div>
-                </div>
+  <div class="developer-section-title"><div><div class="eyebrow">WERKZEUGE</div><h2>System & Synchronisation</h2></div></div>
+  <div class="developer-tools-grid">
+    <button class="developer-tool-card" onclick="developerCheckCloud()"><span>☁️</span><div><strong>Cloud prüfen</strong><small>Haushalt laden und Verbindung testen</small></div><b>›</b></button>
+    <button class="developer-tool-card" onclick="developerReloadHomeHub()"><span>🔄</span><div><strong>Cloud neu laden</strong><small>Aktuelle Daten erneut von Supabase holen</small></div><b>›</b></button>
+    <button class="developer-tool-card" onclick="developerRefreshDiagnostics()"><span>🧪</span><div><strong>Diagnose aktualisieren</strong><small>Session, Haushalt und Payload prüfen</small></div><b>›</b></button>
+    <button class="developer-tool-card" onclick="developerCopyDiagnostics()"><span>📋</span><div><strong>Diagnose kopieren</strong><small>Technische Informationen in die Zwischenablage</small></div><b>›</b></button>
+  </div>
 
-                <div class="developer-card developer-card-wide">
-                    <div class="developer-card-icon">🧪</div>
-                    <div>
-                        <h2>Entwicklerbereich</h2>
-                        <p>Hier können später sichere Admin- und Testwerkzeuge ergänzt werden.</p>
-                        <div class="developer-note">Der Bereich ist für normale Benutzer nicht sichtbar.</div>
-                    </div>
-                </div>
-            </div>
-        </section>
+  <div class="developer-section-title"><div><div class="eyebrow">DATEN</div><h2>Aktueller Zustand</h2></div></div>
+  <div class="developer-panel">
+    <div class="developer-row"><span>App-Version</span><strong id="developer-app-version">v10</strong></div>
+    <div class="developer-row"><span>Browser</span><strong id="developer-browser">—</strong></div>
+    <div class="developer-row"><span>Authentifizierung</span><strong id="developer-auth-status">—</strong></div>
+    <div class="developer-row"><span>Haushalt synchronisiert</span><strong id="developer-household-status">—</strong></div>
+  </div>
+
+  <div class="developer-section-title"><div><div class="eyebrow">NÄCHSTE SCHRITTE</div><h2>Entwicklerfunktionen</h2></div></div>
+  <div class="developer-coming-grid">
+    <div><span>👥</span><strong>Benutzerverwaltung</strong><small>Haushaltsmitglieder und Rollen</small></div>
+    <div><span>🏠</span><strong>Haushaltsverwaltung</strong><small>Haushalte und Beitrittscodes</small></div>
+    <div><span>🐛</span><strong>Fehlerdiagnose</strong><small>Sync- und Auth-Probleme schneller finden</small></div>
+  </div>
+</section>
 
 
 

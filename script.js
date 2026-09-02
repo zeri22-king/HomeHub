@@ -15,25 +15,75 @@ function updateDeveloperAccessUI(allowed, user) {
     if (nav) nav.classList.toggle("developer-visible", developerAccess);
     if (more) more.classList.toggle("developer-visible", developerAccess);
     if (emailEl) emailEl.textContent = user?.email || "—";
+    window.__homeHubDeveloperEmail = user?.email || "";
     if (!developerAccess && page) page.classList.remove("active");
+    if (developerAccess) setTimeout(developerUpdateOverview, 0);
     return developerAccess;
 }
 
 async function updateDeveloperAccess(user) {
     if (!user) return updateDeveloperAccessUI(false, null);
-
+    let allowed = false;
     try {
         const { data, error } = await supabaseClient.rpc("is_homehub_developer");
-        if (!error && data === true) {
-            return updateDeveloperAccessUI(true, user);
-        }
-    } catch (error) {
-        console.warn("Entwicklerstatus konnte nicht geprüft werden:", error);
+        if (!error) allowed = data === true;
+        if (error) console.warn("Developer-RPC:", error.message);
+    } catch (error) { console.warn("Developer-RPC fehlgeschlagen:", error); }
+
+    // Zweite sichere Prüfung direkt auf der Entwickler-Tabelle (RLS erlaubt nur die eigene Zeile).
+    if (!allowed) {
+        try {
+            const { data, error } = await supabaseClient
+                .from("homehub_developers")
+                .select("user_id")
+                .eq("user_id", user.id)
+                .maybeSingle();
+            if (!error && data) allowed = true;
+        } catch (error) { console.warn("Developer-Tabelle konnte nicht geprüft werden:", error); }
     }
 
-    // Fallback für den eigenen Entwickler-Account, falls die RPC-Funktion noch fehlt.
+    // Nur als Übergangshilfe für den festgelegten Entwickler-Account.
     const allowedByEmail = String(user.email || "").trim().toLowerCase() === DEVELOPER_EMAIL;
-    return updateDeveloperAccessUI(allowedByEmail, user);
+    return updateDeveloperAccessUI(allowed || allowedByEmail, user);
+}
+
+function developerUpdateOverview() {
+    if (!developerAccess) return;
+    const size = typeof getHomeHubCloudData === "function" ? JSON.stringify(getHomeHubCloudData()).length : 0;
+    const set = (id, value) => { const e=document.getElementById(id); if(e) e.textContent=value; };
+    set("developer-account-email", "" + (supabaseClient.auth.getUser ? (window.__homeHubDeveloperEmail || "n.zerlauth@gmx.at") : "—"));
+    set("developer-household-name", currentHousehold?.name || "—");
+    set("developer-household-id", currentHousehold?.id ? String(currentHousehold.id).slice(0,8)+"…" : "Kein Haushalt");
+    set("developer-data-size", size ? Math.round(size/1024*10)/10 + " KB" : "0 KB");
+    set("developer-auth-status", currentHousehold ? "Angemeldet" : "Session aktiv");
+    set("developer-household-status", currentHousehold ? "Synchronisiert" : "Wird geladen…");
+    set("developer-browser", navigator.userAgent.includes("Edg/") ? "Microsoft Edge" : navigator.userAgent.includes("Chrome") ? "Google Chrome" : navigator.userAgent.includes("Safari") ? "Safari" : "Browser");
+}
+
+async function developerRefreshDiagnostics() {
+    if (!developerAccess) return;
+    const ok = await loadCloudData(true);
+    const now = new Date().toLocaleString("de-AT");
+    const e=document.getElementById("developer-last-sync"); if(e) e.textContent = ok ? now : "Cloud-Fehler";
+    const c=document.getElementById("developer-cloud-status"); if(c) c.textContent = ok ? "Online" : "Fehler";
+    developerUpdateOverview();
+    await showHomeHubAlert(ok ? "Diagnose abgeschlossen. Die Cloud ist erreichbar." : "Diagnose abgeschlossen. Es gibt ein Cloud-Problem.", "Entwicklerdiagnose");
+}
+
+async function developerCopyDiagnostics() {
+    if (!developerAccess) return;
+    developerUpdateOverview();
+    const text = [
+      "HomeHub Developer Diagnostics",
+      "App: v10",
+      "Account: " + (window.__homeHubDeveloperEmail || "n.zerlauth@gmx.at"),
+      "Haushalt: " + (currentHousehold?.name || "—"),
+      "Haushalt-ID: " + (currentHousehold?.id || "—"),
+      "Cloud: " + (document.getElementById("developer-cloud-status")?.textContent || "—"),
+      "Zeit: " + new Date().toLocaleString("de-AT")
+    ].join("\n");
+    try { await navigator.clipboard.writeText(text); await showHomeHubAlert("Diagnose wurde kopiert.", "Entwickler"); }
+    catch (_) { await showHomeHubAlert(text, "Entwicklerdiagnose"); }
 }
 
 function developerReloadHomeHub() {
