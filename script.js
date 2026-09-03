@@ -75,7 +75,7 @@ async function developerCopyDiagnostics() {
     developerUpdateOverview();
     const text = [
       "HomeHub Developer Diagnostics",
-      "App: v21",
+      "App: v22",
       "Account: " + (window.__homeHubDeveloperEmail || "n.zerlauth@gmx.at"),
       "Haushalt: " + (currentHousehold?.name || "—"),
       "Haushalt-ID: " + (currentHousehold?.id || "—"),

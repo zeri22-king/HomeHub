@@ -127,3 +127,38 @@ body.dark-mode .developer-data-row{background:#0b1322}.developer-data-row code{b
         padding: 16px;
     }
 }
+
+/* v22 - Developer access visibility and larger developer icons */
+.developer-more-menu-item { display: none !important; }
+.developer-more-menu-item.developer-visible { display: flex !important; }
+.developer-nav-button.developer-visible { display: flex !important; }
+
+.developer-stat-icon {
+  width: 68px !important;
+  height: 68px !important;
+  min-width: 68px !important;
+  border-radius: 18px !important;
+  font-size: 32px !important;
+}
+.developer-tool-card > span {
+  width: 68px !important;
+  height: 68px !important;
+  min-width: 68px !important;
+  border-radius: 18px !important;
+  font-size: 32px !important;
+}
+.developer-card-icon {
+  width: 52px !important;
+  height: 52px !important;
+  min-width: 52px !important;
+  border-radius: 14px !important;
+  font-size: 26px !important;
+}
+@media (max-width:820px) {
+  .developer-stat-icon {
+    width: 64px !important; height: 64px !important; min-width:64px !important; font-size:30px !important;
+  }
+  .developer-tool-card > span {
+    width: 64px !important; height:64px !important; min-width:64px !important; font-size:30px !important;
+  }
+}

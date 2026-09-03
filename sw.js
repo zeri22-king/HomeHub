@@ -1,4 +1,4 @@
-const CACHE_NAME = "homehub-v21";
+const CACHE_NAME = "homehub-v22";
 const APP_SHELL = ["./", "./index.html", "./style.css?v=15", "./script.js?v=15", "./manifest.json", "./icon.png"];
 
 self.addEventListener("install", event => {
